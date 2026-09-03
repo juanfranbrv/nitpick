@@ -140,7 +140,8 @@ congelada es el fondo de la ventana de selección. Así la pantalla no puede cam
 mientras arrastras, una selección puede cruzar dos monitores, y no hay que pelearse
 con la transparencia y el click-through de Windows.
 
-Tres decisiones sostienen la latencia entre pulsar el atajo y ver el selector:
+Cuatro decisiones sostienen la latencia entre pulsar el atajo y ver el selector
+(769 ms al principio, 145 ms tras las tres primeras):
 
 - La captura **no pasa por disco**. Vive en memoria y llega al webview por un
   esquema URI propio (`frozen://`) como **BMP**, que es prácticamente una copia de
@@ -149,6 +150,14 @@ Tres decisiones sostienen la latencia entre pulsar el atajo y ver el selector:
 - La ventana de selección se **construye una sola vez** al arrancar y se reutiliza
   oculta. Crear un webview por captura costaba la otra mitad del retardo.
 - Solo el recorte final se escribe a disco, ya como PNG.
+- El panel **no se oculta**: se le pide a Windows que lo excluya de las capturas
+  (`SetWindowDisplayAffinity`). Ocultarlo obligaba a esperar ~70 ms a que el
+  compositor repintase — la mitad de lo que quedaba — y hacía parpadear el panel en
+  cada atajo. Si la API falla, se vuelve al camino de ocultar y esperar.
+
+Un detalle que costó dos intentos: optimizar solo las dependencias (`profile.dev.package."*"`)
+no bastaba, porque el bucle de composición vive en *este* crate. Con `profile.dev`
+también optimizado, componer dos monitores pasó de 133 ms a 1 ms.
 
 La selección viaja al backend como **fracciones** de la imagen (0..1), no como
 píxeles, de modo que el escalado de pantalla nunca entra en la aritmética del

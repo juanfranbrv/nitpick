@@ -40,6 +40,7 @@ pub fn freeze() -> Result<Frozen, String> {
         shots.push((x, y, img));
     }
     let grabbed = start.elapsed();
+    let mut allocated = grabbed;
 
     // One monitor is the common case, and then the capture already *is* the
     // canvas: allocating a second desktop-sized buffer and copying every pixel
@@ -61,6 +62,8 @@ pub fn freeze() -> Result<Frozen, String> {
             (max_y - min_y) as u32,
             Rgba([0, 0, 0, 255]),
         );
+        allocated = start.elapsed();
+
         for (x, y, img) in &shots {
             blit(&mut canvas, img, (x - min_x) as u32, (y - min_y) as u32);
         }
@@ -68,10 +71,12 @@ pub fn freeze() -> Result<Frozen, String> {
     };
 
     eprintln!(
-        "  freeze: {screens} monitor(es), enumerar {} ms, capturar {} ms, componer {} ms",
+        "  freeze: {screens} monitor(es), enumerar {} ms, capturar {} ms, \
+         reservar {} ms, copiar {} ms",
         enumerated.as_millis(),
         (grabbed - enumerated).as_millis(),
-        (start.elapsed() - grabbed).as_millis(),
+        (allocated - grabbed).as_millis(),
+        (start.elapsed() - allocated).as_millis(),
     );
     Ok(frozen)
 }

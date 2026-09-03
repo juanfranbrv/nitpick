@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod capture;
-mod context;
+mod win;
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
@@ -148,6 +148,9 @@ struct Store {
     /// Bumped per capture so the webview cannot reuse the previous bitmap.
     version: AtomicU64,
     capturing: AtomicBool,
+    /// True when Windows agreed to keep our windows out of screenshots, which
+    /// makes hiding the panel before a capture unnecessary.
+    hidden_from_capture: AtomicBool,
     /// Problems worth telling the user about once the panel is up.
     warnings: Mutex<Vec<String>>,
 }
@@ -170,6 +173,7 @@ impl Store {
             pending_context: Mutex::new(None),
             version: AtomicU64::new(0),
             capturing: AtomicBool::new(false),
+            hidden_from_capture: AtomicBool::new(false),
             warnings: Mutex::new(vec![]),
         }
     }
@@ -279,13 +283,19 @@ fn start_capture(app: AppHandle) {
         .filter_map(|w| w.hwnd().ok())
         .map(|h| h.0 as isize)
         .collect();
-    *store.pending_context.lock().unwrap() = context::foreground(&ours);
+    *store.pending_context.lock().unwrap() = win::foreground(&ours);
 
-    if let Some(w) = &main {
-        let _ = w.hide();
+    // When Windows keeps our windows out of screenshots there is nothing to
+    // hide from, so the panel stays put: no blink, and no waiting for the
+    // compositor. Otherwise fall back to hiding it and giving the screen time
+    // to repaint, or the panel lands inside its own capture.
+    let hide_first = !store.hidden_from_capture.load(Ordering::SeqCst);
+    if hide_first {
+        if let Some(w) = &main {
+            let _ = w.hide();
+        }
+        std::thread::sleep(Duration::from_millis(70));
     }
-    // Give the compositor a moment, or the panel ends up inside its own capture.
-    std::thread::sleep(Duration::from_millis(70));
 
     let ready = match capture::freeze() {
         Ok(frozen) => {
@@ -843,6 +853,20 @@ fn main() {
                 .shadow(false)
                 .visible(false)
                 .build()?;
+
+            // Keep our own windows out of the screenshot at the OS level. When
+            // this works the capture path skips hiding the panel entirely.
+            let excluded = [MAIN, OVERLAY]
+                .iter()
+                .filter_map(|label| app.get_webview_window(label))
+                .filter_map(|w| w.hwnd().ok())
+                .all(|h| win::exclude_from_capture(h.0 as isize));
+            app.state::<Store>()
+                .hidden_from_capture
+                .store(excluded, Ordering::SeqCst);
+            if !excluded {
+                eprintln!("sin exclusión de captura: se ocultará el panel en cada captura");
+            }
 
             // Another app may already own one of these. That costs a shortcut,
             // not the whole program, so never let it abort startup.

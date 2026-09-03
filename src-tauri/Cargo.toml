@@ -24,9 +24,14 @@ windows = { version = "0.62", features = [
   "Win32_UI_WindowsAndMessaging",
 ] }
 
-# A debug build still has to feel instant when you press the shortcut, and all
-# the per-pixel work happens inside dependencies. Unoptimised, that dominates
-# the capture; optimising only the dependencies keeps our own rebuilds fast.
+# A debug build still has to feel instant when you press the shortcut, and the
+# capture path is all bulk memory work. Dependencies do the decoding and
+# encoding; `blit` in capture.rs does the compositing, so leaving our own crate
+# at opt-level 0 left the hot loop unoptimised. This crate is small enough that
+# optimising it costs little rebuild time.
+[profile.dev]
+opt-level = 2
+
 [profile.dev.package."*"]
 opt-level = 2
 
