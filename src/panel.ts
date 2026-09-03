@@ -45,6 +45,62 @@ function toast(msg: string) {
   toastTimer = window.setTimeout(() => (toastEl.hidden = true), 2600);
 }
 
+// ----------------------------------------------------------------- ask first
+
+const modal = el("modal");
+const modalOk = el<HTMLButtonElement>("modal-ok");
+const modalCancel = el<HTMLButtonElement>("modal-cancel");
+
+/**
+ * Stands in for the webview's native `confirm()`, which cannot be styled and
+ * labels itself with the page's origin.
+ *
+ * Enter and Space need no handling: whichever button holds focus answers them
+ * natively. A destructive action focuses Cancel, so it is never one stray
+ * Enter away.
+ */
+function ask(opts: {
+  title: string;
+  body: string;
+  confirm?: string;
+  danger?: boolean;
+}): Promise<boolean> {
+  el("modal-title").textContent = opts.title;
+  el("modal-body").textContent = opts.body;
+  modalOk.textContent = opts.confirm ?? "Aceptar";
+  modalOk.classList.toggle("danger", opts.danger === true);
+  modal.hidden = false;
+
+  const previous = document.activeElement as HTMLElement | null;
+  (opts.danger ? modalCancel : modalOk).focus();
+
+  return new Promise((resolve) => {
+    const listeners = new AbortController();
+    const close = (answer: boolean) => {
+      listeners.abort();
+      modal.hidden = true;
+      previous?.focus();
+      resolve(answer);
+    };
+    const on = { signal: listeners.signal };
+
+    modalOk.addEventListener("click", () => close(true), on);
+    modalCancel.addEventListener("click", () => close(false), on);
+    // Clicking the backdrop, but not the card itself, dismisses.
+    modal.addEventListener("mousedown", (e) => e.target === modal && close(false), on);
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        e.stopPropagation();
+        close(false);
+      },
+      { ...on, capture: true },
+    );
+  });
+}
+
 // ------------------------------------------------------------- size & opacity
 
 /**
@@ -301,8 +357,12 @@ async function showArchives() {
 /** The backend refuses to overwrite a non-empty list, so save it first. */
 async function openBatch(id: string) {
   if (notes.length) {
-    const msg = `Se guardarán las ${notes.length} notas actuales antes de abrir. ¿Continuar?`;
-    if (!confirm(msg)) return;
+    const ok = await ask({
+      title: "Abrir otras notas",
+      body: `Se guardarán antes las ${notes.length} notas de la lista actual, con sus capturas. No se pierde nada.`,
+      confirm: "Guardar y abrir",
+    });
+    if (!ok) return;
     await archiveNotes();
   }
   try {
@@ -372,9 +432,16 @@ btnArchive.addEventListener("click", async () => {
 });
 
 el("btn-clear").addEventListener("click", async () => {
+  if (!notes.length) return;
   const withShots = notes.filter((n) => n.image).length;
   const detail = withShots ? ` y sus ${withShots} capturas` : "";
-  if (notes.length && !confirm(`¿Borrar las ${notes.length} anotaciones${detail}?`)) return;
+  const ok = await ask({
+    title: "Vaciar las notas",
+    body: `Se borrarán ${notes.length} anotaciones${detail}. Esto no se puede deshacer: usa «Guardar notas» si quieres conservarlas.`,
+    confirm: "Borrar",
+    danger: true,
+  });
+  if (!ok) return;
   notes = await clearNotes();
   render();
 });
