@@ -35,7 +35,11 @@ opt-level = 2
 [profile.dev.package."*"]
 opt-level = 2
 
+# Speed over size. This app is a few megabytes either way, and the capture path
+# is bulk memory work where the optimisation level decided between 133 ms and
+# 1 ms in the debug build. Not worth gambling the daily binary to save a little
+# disk.
 [profile.release]
 strip = true
 lto = true
-opt-level = "s"
+opt-level = 3
