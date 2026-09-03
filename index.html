@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Anotador</title>
+    <link rel="stylesheet" href="/src/panel.css" />
+  </head>
+  <body class="panel">
+    <div id="pill" class="pill" data-tauri-drag-region hidden>
+      <span class="pill-dot"></span>
+      <span class="pill-count" id="pill-count">0</span>
+      <span class="pill-label">anotaciones</span>
+      <button class="pill-expand" id="btn-expand" title="Abrir panel">⌃</button>
+    </div>
+
+    <div id="panel" class="card">
+      <header class="card-head" data-tauri-drag-region>
+        <span class="grip" data-tauri-drag-region></span>
+        <h1 data-tauri-drag-region>Anotador</h1>
+        <span class="count" id="count">0</span>
+        <button id="btn-shot" title="Capturar región (Ctrl+Alt+A)">✂</button>
+        <button id="btn-archives" title="Notas guardadas">🗂</button>
+        <button id="btn-folder" title="Abrir carpeta de capturas">📁</button>
+        <button id="btn-settings" title="Ajustes">⚙</button>
+        <button id="btn-collapse" title="Colapsar">–</button>
+      </header>
+
+      <ul class="notes" id="notes"></ul>
+
+      <div class="empty" id="empty">
+        <p>Sin anotaciones todavía.</p>
+        <p class="hint"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> captura una región y abre el campo de texto.</p>
+      </div>
+
+      <footer class="card-foot">
+        <div class="quick">
+          <textarea id="quick" rows="3" placeholder="Nota rápida sin captura…"></textarea>
+          <button id="btn-quick" class="send" title="Añadir la nota (Ctrl+Enter)">⏎</button>
+        </div>
+        <button id="btn-copy" class="primary">Copiar todo</button>
+        <div class="actions">
+          <button id="btn-archive" class="ghost" title="Guardar las notas en un .md y empezar una lista nueva">Guardar notas</button>
+          <button id="btn-clear" class="ghost danger" title="Borrar estas notas y sus capturas">Vaciar</button>
+        </div>
+      </footer>
+
+      <section class="sheet" id="archives" hidden>
+        <header class="card-head">
+          <button id="btn-archives-back" title="Volver">‹</button>
+          <h1>Notas guardadas</h1>
+          <button id="btn-archives-folder" title="Abrir la carpeta">📁</button>
+        </header>
+        <ul class="archive-list" id="archive-list"></ul>
+        <div class="empty" id="archives-empty" hidden>
+          <p>No has guardado ninguna nota todavía.</p>
+          <p class="hint">«Guardar notas» archiva la lista actual y abre una nueva.</p>
+        </div>
+      </section>
+
+      <section class="sheet settings" id="settings" hidden>
+        <header class="card-head">
+          <button id="btn-settings-back" title="Volver">‹</button>
+          <h1>Ajustes</h1>
+        </header>
+        <div class="settings-body">
+          <fieldset>
+            <legend>Apariencia</legend>
+            <label><input type="radio" name="theme" value="dark" /><span>Oscuro</span></label>
+            <label><input type="radio" name="theme" value="light" /><span>Claro</span></label>
+            <label><input type="radio" name="theme" value="system" /><span>Según Windows</span></label>
+          </fieldset>
+          <fieldset>
+            <legend>Opacidad de la ventana</legend>
+            <div class="slider">
+              <input type="range" id="opacity" min="20" max="100" step="5" />
+              <output id="opacity-out">100%</output>
+            </div>
+          </fieldset>
+        </div>
+      </section>
+
+      <div class="toast" id="toast" hidden></div>
+    </div>
+
+    <script type="module" src="/src/panel.ts"></script>
+  </body>
+</html>

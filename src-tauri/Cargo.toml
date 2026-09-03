@@ -1,0 +1,30 @@
+[package]
+name = "anotador"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["protocol-asset"] }
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-clipboard-manager = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+xcap = "0.9"
+chrono = "0.4"
+base64 = "0.22"
+
+# A debug build still has to feel instant when you press the shortcut, and all
+# the per-pixel work happens inside dependencies. Unoptimised, that dominates
+# the capture; optimising only the dependencies keeps our own rebuilds fast.
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.release]
+strip = true
+lto = true
+opt-level = "s"

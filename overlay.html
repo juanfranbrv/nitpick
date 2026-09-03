@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Seleccionar región</title>
+    <link rel="stylesheet" href="/src/overlay.css" />
+  </head>
+  <body class="overlay">
+    <img id="frozen" alt="" draggable="false" />
+    <div id="scrim"></div>
+    <div id="sel" hidden>
+      <div class="sel-size" id="sel-size"></div>
+    </div>
+    <canvas id="ink" hidden></canvas>
+    <div id="crosshair-x"></div>
+    <div id="crosshair-y"></div>
+    <div id="tip">Arrastra para seleccionar · <b>Esc</b> cancela</div>
+
+    <form id="composer" hidden>
+      <div class="tools">
+        <span class="tools-label">Rotulador</span>
+        <div class="swatches" id="swatches"></div>
+        <div class="widths" id="widths"></div>
+        <button type="button" id="btn-undo" title="Deshacer trazo (Ctrl+Z)">↶</button>
+      </div>
+      <textarea id="note-text" rows="3" placeholder="¿Qué está mal aquí?"></textarea>
+      <div class="composer-foot">
+        <span><b>Ctrl</b>+<b>Enter</b> guardar · <b>Esc</b> descartar</span>
+        <button type="submit">Guardar</button>
+      </div>
+    </form>
+
+    <script type="module" src="/src/overlay.ts"></script>
+  </body>
+</html>
