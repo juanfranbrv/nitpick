@@ -26,9 +26,25 @@ un agente local.
 
 4. Lo pegas en Claude Code, Codex u OpenCode y el agente abre las capturas solo.
 
-Sobre la captura puedes **dibujar con el rotulador** antes de guardarla: eliges color
-y grosor en la barra del compositor, `Ctrl` + `Z` deshace el último trazo. Los trazos
-se queman en el PNG, así que el agente ve lo que le has señalado.
+Sobre la captura puedes **dibujar** antes de guardarla, con cuatro herramientas en la
+barra del compositor:
+
+| Herramienta | Para qué |
+| --- | --- |
+| ✎ Rotulador | Trazo libre |
+| ↗ Flecha | Señalar un control concreto |
+| ▭ Recuadro | Encerrar una zona |
+| ▒ Difuminar | Tapar claves, tokens o datos de clientes antes de compartir |
+
+Color y grosor se recuerdan entre capturas. `Ctrl` + `Z` deshace el último trazo. Todo
+se quema en el PNG, así que el agente ve exactamente lo que le has señalado.
+
+Si lo que falla es la **relación entre dos zonas alejadas**, no hace falta encuadrarlas:
+pulsa `Enter` (o «toda la pantalla» en el aviso de arriba) y anotas sobre la pantalla
+completa congelada.
+
+Cada captura guarda además el **título y el tamaño de la ventana** que tenías delante,
+que es la mitad de un informe de fallo y no hay que teclearla.
 
 El portapapeles de Windows solo admite **un** elemento — o texto, o una imagen — así
 que no hay forma de pegar varias capturas de una vez. Por eso el texto lleva las
@@ -37,7 +53,18 @@ imágenes. La primera vez el agente te pedirá permiso para leer fuera de su
 directorio de trabajo.
 
 Para notas sin captura, la caja del pie admite varias líneas: `Ctrl` + `Enter` o el
-botón `⏎` la añaden a la lista.
+botón `⏎` la añaden a la lista. Y `Ctrl` + `V` con una imagen en el portapapeles la
+convierte en una anotación, para capturas hechas con `Win` + `Shift` + `S` o que te
+haya mandado otra persona.
+
+## Ordenar, priorizar y copiar solo una parte
+
+- Arrastra una nota **por su número** para reordenarla: el orden en que ves las cosas
+  no es el orden en que quieres que se arreglen.
+- El chip de cada nota cicla su **prioridad**: normal → bloqueante → menor. La
+  prioridad viaja en el texto copiado, así que el agente sabe por dónde empezar.
+- Las **casillas** limitan la copia: con tres marcadas, el botón pasa a «Copiar 3».
+  Sin ninguna marcada copia todo.
 
 ## Guardar, abrir y vaciar notas
 
@@ -54,9 +81,17 @@ abriéndose. Un test de ida y vuelta (`cargo test`) protege esa propiedad.
 
 ## Ajustes
 
-Engranaje del panel: tema (oscuro / claro / según Windows) y opacidad de la ventana.
-El tamaño del panel se recuerda solo — lo estiras, y ahí se queda entre colapsos y
-entre ejecuciones. Todo vive en `settings.json`.
+Engranaje del panel: tema (oscuro / claro / según Windows), opacidad de la ventana y
+**plantilla de salida**. El tamaño del panel se recuerda solo — lo estiras, y ahí se
+queda entre colapsos y entre ejecuciones. Todo vive en `settings.json`.
+
+La plantilla envuelve el texto copiado, porque Claude Code, Codex y OpenCode no
+responden igual al mismo preámbulo. `{{notas}}` es el listado, `{{total}}` y
+`{{fecha}}` son opcionales; si te dejas `{{notas}}` fuera, las notas se añaden al
+final en lugar de perderse.
+
+La plantilla **no** afecta a las notas guardadas: el archivo se escribe siempre en el
+formato canónico, o cambiarla dejaría ilegibles las notas ya guardadas.
 
 ## Dónde se guarda todo
 
@@ -75,7 +110,9 @@ C:\Users\<tú>\Anotador\
 | `Ctrl` + `Alt` + `A` | Capturar región y anotar |
 | `Ctrl` + `Alt` + `C` | Copiar todas las anotaciones |
 | `Ctrl` + `Enter` | Guardar la nota que estás escribiendo |
-| `Ctrl` + `Z` | Deshacer el último trazo del rotulador |
+| `Ctrl` + `V` | Pegar una imagen del portapapeles como anotación |
+| `Enter` | En el selector: anotar sobre la pantalla completa |
+| `Ctrl` + `Z` | Deshacer el último trazo |
 | `Esc` | Cancelar la captura |
 
 Si otro programa ya usa uno de los atajos globales, Anotador arranca igual y te lo
@@ -117,5 +154,17 @@ La selección viaja al backend como **fracciones** de la imagen (0..1), no como
 píxeles, de modo que el escalado de pantalla nunca entra en la aritmética del
 recorte.
 
-Limitación conocida: con dos monitores a escalados de DPI distintos, la composición
-del escritorio virtual puede desalinearse. Con escalado uniforme funciona bien.
+El difuminado no pinta píxeles opacos encima: vuelve a dibujar la propia captura
+sobre sí misma a través de un filtro CSS, recortando el resultado al rectángulo. Sin
+ese recorte el filtro muestrearía más allá del borde y dejaría un halo suave en vez
+de un parche de bordes limpios.
+
+## Limitaciones conocidas
+
+- Con dos monitores a **escalados de DPI distintos**, la composición del escritorio
+  virtual puede desalinearse. Con escalado uniforme funciona bien.
+- El contexto que se guarda es el **título** de la ventana y su tamaño, **no la URL**.
+  Sacar la dirección de un navegador exige recorrer su árbol de accesibilidad con UI
+  Automation buscando la barra de direcciones: depende del navegador y falla en
+  silencio cuando cambia. El título más el tamaño es lo que se puede obtener de forma
+  fiable.

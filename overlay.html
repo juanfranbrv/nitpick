@@ -14,11 +14,15 @@
     <canvas id="ink" hidden></canvas>
     <div id="crosshair-x"></div>
     <div id="crosshair-y"></div>
-    <div id="tip">Arrastra para seleccionar · <b>Esc</b> cancela</div>
+    <div id="tip">
+      Arrastra para seleccionar ·
+      <button type="button" id="btn-full">toda la pantalla</button>
+      · <b>Esc</b> cancela
+    </div>
 
     <form id="composer" hidden>
       <div class="tools">
-        <span class="tools-label">Rotulador</span>
+        <div class="tool-picker" id="tool-picker"></div>
         <div class="swatches" id="swatches"></div>
         <div class="widths" id="widths"></div>
         <button type="button" id="btn-undo" title="Deshacer trazo (Ctrl+Z)">↶</button>

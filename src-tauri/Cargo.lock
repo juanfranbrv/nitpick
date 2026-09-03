@@ -64,6 +64,7 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-global-shortcut",
  "tauri-plugin-opener",
+ "windows 0.62.2",
  "xcap",
 ]
 

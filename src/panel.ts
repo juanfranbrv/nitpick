@@ -4,9 +4,10 @@ import { listen } from "@tauri-apps/api/event";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { openPath } from "@tauri-apps/plugin-opener";
 import {
-  addTextNote, applyTheme, archiveNotes, beginCapture, buildMarkdown, clearNotes,
-  deleteNote, getSettings, listArchives, listNotes, openArchive, openBaseDir,
-  putSettings, startupWarnings, updateNote, type Note, type Settings,
+  addClipboardNote, addTextNote, applyTheme, archiveNotes, beginCapture, buildMarkdown,
+  clearNotes, DEFAULT_TEMPLATE, deleteNote, getSettings, listArchives, listNotes,
+  openArchive, openBaseDir, PRIORITIES, putSettings, reorderNotes, setPriority,
+  startupWarnings, updateNote, type Note, type Settings,
 } from "./api";
 
 /** Wanted size on a machine that has never run this before. */
@@ -30,6 +31,8 @@ const toastEl = el("toast");
 const win = getCurrentWindow();
 
 let notes: Note[] = [];
+/** Ticked notes; empty means "copy everything". UI state only. */
+const picked = new Set<string>();
 let settings: Settings;
 let collapsed = false;
 let toastTimer = 0;
@@ -88,14 +91,40 @@ function render() {
   btnCopy.disabled = notes.length === 0;
   btnArchive.disabled = notes.length === 0;
 
+  // Notes can be deleted while ticked; never let a stale id reach the copy.
+  const live = new Set(notes.map((n) => n.id));
+  for (const id of [...picked]) if (!live.has(id)) picked.delete(id);
+  btnCopy.textContent = picked.size ? `Copiar ${picked.size}` : "Copiar todo";
+
   notesList.replaceChildren(
     ...notes.map((note, i) => {
       const li = document.createElement("li");
       li.className = "note";
+      li.dataset.id = note.id;
+
+      const pick = document.createElement("input");
+      pick.type = "checkbox";
+      pick.className = "note-pick";
+      pick.checked = picked.has(note.id);
+      pick.title = "Incluir solo esta en la copia";
+      pick.addEventListener("change", () => {
+        if (pick.checked) picked.add(note.id);
+        else picked.delete(note.id);
+        btnCopy.textContent = picked.size ? `Copiar ${picked.size}` : "Copiar todo";
+      });
+      li.append(pick);
 
       const idx = document.createElement("span");
       idx.className = "note-idx";
       idx.textContent = String(i + 1);
+      idx.title = "Arrastra para reordenar";
+      // The row becomes draggable only while the handle is held, so selecting
+      // text inside the note still works.
+      idx.addEventListener("mousedown", () => (li.draggable = true));
+      li.addEventListener("dragend", () => {
+        li.draggable = false;
+        clearDropMarks();
+      });
       li.append(idx);
 
       if (note.image) {
@@ -123,8 +152,29 @@ function render() {
       text.addEventListener("change", () => updateNote(note.id, text.value));
       text.addEventListener("blur", () => updateNote(note.id, text.value));
       body.append(text);
+
+      if (note.context) {
+        const ctx = document.createElement("span");
+        ctx.className = "note-context";
+        ctx.textContent = note.context;
+        ctx.title = note.context;
+        body.append(ctx);
+      }
       li.append(body);
       queueMicrotask(autosize);
+
+      const prio = document.createElement("button");
+      prio.className = "note-prio";
+      prio.dataset.priority = note.priority;
+      prio.textContent = PRIORITIES.find((p) => p.key === note.priority)?.label ?? "normal";
+      prio.title = "Cambiar prioridad";
+      prio.addEventListener("click", async () => {
+        const at = PRIORITIES.findIndex((p) => p.key === note.priority);
+        const next = PRIORITIES[(at + 1) % PRIORITIES.length].key;
+        notes = await setPriority(note.id, next);
+        render();
+      });
+      li.append(prio);
 
       const del = document.createElement("button");
       del.className = "note-del";
@@ -140,6 +190,59 @@ function render() {
     }),
   );
 }
+
+// -------------------------------------------------------------- drag to order
+
+/** The order you spot things is not the order you want them fixed in. */
+let dragId: string | null = null;
+
+function clearDropMarks() {
+  for (const li of notesList.children) {
+    li.classList.remove("drop-above", "drop-below", "dragging");
+  }
+}
+
+notesList.addEventListener("dragstart", (e) => {
+  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
+  if (!li) return;
+  dragId = li.dataset.id ?? null;
+  li.classList.add("dragging");
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+});
+
+notesList.addEventListener("dragover", (e) => {
+  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
+  if (!li || !dragId || li.dataset.id === dragId) return;
+  e.preventDefault();
+  const box = li.getBoundingClientRect();
+  const above = e.clientY < box.top + box.height / 2;
+  li.classList.toggle("drop-above", above);
+  li.classList.toggle("drop-below", !above);
+});
+
+notesList.addEventListener("dragleave", (e) => {
+  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
+  li?.classList.remove("drop-above", "drop-below");
+});
+
+notesList.addEventListener("drop", async (e) => {
+  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
+  const targetId = li?.dataset.id;
+  if (!li || !dragId || !targetId || targetId === dragId) return;
+  e.preventDefault();
+
+  const box = li.getBoundingClientRect();
+  const above = e.clientY < box.top + box.height / 2;
+
+  const ids = notes.map((n) => n.id).filter((id) => id !== dragId);
+  const at = ids.indexOf(targetId);
+  ids.splice(above ? at : at + 1, 0, dragId);
+
+  dragId = null;
+  clearDropMarks();
+  notes = await reorderNotes(ids);
+  render();
+});
 
 async function setCollapsed(next: boolean) {
   collapsed = next;
@@ -229,8 +332,32 @@ quick.addEventListener("keydown", (e) => {
 });
 
 el("btn-copy").addEventListener("click", async () => {
-  await writeText(await buildMarkdown());
-  toast(`${notes.length} ${notes.length === 1 ? "anotación copiada" : "anotaciones copiadas"}`);
+  const ids = picked.size ? [...picked] : null;
+  await writeText(await buildMarkdown(ids));
+  const n = ids ? ids.length : notes.length;
+  toast(`${n} ${n === 1 ? "anotación copiada" : "anotaciones copiadas"}`);
+});
+
+async function pasteImage() {
+  try {
+    notes = await addClipboardNote(quick.value.trim());
+    quick.value = "";
+    render();
+    toast("Imagen pegada");
+  } catch (e) {
+    toast(String(e));
+  }
+}
+
+el("btn-paste").addEventListener("click", pasteImage);
+
+// Ctrl+V with an image on the clipboard becomes a note; plain text still
+// pastes into whatever field has focus.
+document.addEventListener("paste", (e) => {
+  const hasImage = [...(e.clipboardData?.items ?? [])].some((i) => i.type.startsWith("image/"));
+  if (!hasImage) return;
+  e.preventDefault();
+  void pasteImage();
 });
 
 btnArchive.addEventListener("click", async () => {
@@ -271,6 +398,19 @@ opacity.addEventListener("input", () => {
 // Dragging a slider fires per pixel; only write once it is let go.
 opacity.addEventListener("change", () => void putSettings(settings));
 
+const template = el<HTMLTextAreaElement>("template");
+
+template.addEventListener("change", () => {
+  settings.template = template.value;
+  void putSettings(settings);
+});
+
+el("btn-template-reset").addEventListener("click", () => {
+  settings.template = DEFAULT_TEMPLATE;
+  template.value = DEFAULT_TEMPLATE;
+  void putSettings(settings);
+});
+
 win.onResized(rememberSize);
 
 // The Rust side owns the note list; it tells us whenever a capture lands.
@@ -290,6 +430,7 @@ const chosen = document.querySelector<HTMLInputElement>(
 if (chosen) chosen.checked = true;
 opacity.value = String(Math.round(settings.opacity * 100));
 opacityOut.value = `${opacity.value}%`;
+template.value = settings.template;
 
 notes = await listNotes();
 render();

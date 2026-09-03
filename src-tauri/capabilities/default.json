@@ -12,6 +12,7 @@
     "core:window:allow-start-dragging",
     "core:event:default",
     "clipboard-manager:allow-write-text",
+    "clipboard-manager:allow-read-image",
     {
       "identifier": "opener:allow-open-path",
       "allow": [{ "path": "**" }]

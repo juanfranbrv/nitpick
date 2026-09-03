@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod capture;
+mod context;
 
 use chrono::Local;
 use serde::{Deserialize, Serialize};
@@ -19,13 +20,55 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 const OVERLAY: &str = "overlay";
 const MAIN: &str = "main";
 
+/// The three priorities, in the order they are cycled through in the panel.
+/// Stored as stable keys; `PRIORITY_LABELS` is what reaches the Markdown.
+const PRIORITIES: [&str; 3] = ["normal", "blocker", "minor"];
+const PRIORITY_LABELS: [(&str, &str); 3] =
+    [("normal", ""), ("blocker", "bloqueante"), ("minor", "menor")];
+
+fn priority_label(key: &str) -> &'static str {
+    PRIORITY_LABELS.iter().find(|(k, _)| *k == key).map(|(_, l)| *l).unwrap_or("")
+}
+
+fn priority_from_label(label: &str) -> String {
+    PRIORITY_LABELS
+        .iter()
+        .find(|(_, l)| !l.is_empty() && *l == label)
+        .map(|(k, _)| *k)
+        .unwrap_or("normal")
+        .to_string()
+}
+
+fn default_priority() -> String {
+    "normal".into()
+}
+
 #[derive(Serialize, Deserialize, Clone)]
+#[serde(default)]
 struct Note {
     id: String,
     text: String,
     /// Absolute path to the PNG, or None for a text-only note.
     image: Option<String>,
     created_at: String,
+    /// One of `PRIORITIES`.
+    priority: String,
+    /// Title and client size of the window that was in front when the capture
+    /// was taken. None for notes typed by hand.
+    context: Option<String>,
+}
+
+impl Default for Note {
+    fn default() -> Self {
+        Note {
+            id: String::new(),
+            text: String::new(),
+            image: None,
+            created_at: String::new(),
+            priority: default_priority(),
+            context: None,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -61,7 +104,13 @@ struct Settings {
     height: Option<f64>,
     pen_color: String,
     pen_width: f64,
+    /// Wrapper for the copied text. `{{notas}}` is required; `{{total}}` and
+    /// `{{fecha}}` are optional. Different agents respond to different
+    /// preambles, so the whole envelope is yours to change.
+    template: String,
 }
+
+pub const DEFAULT_TEMPLATE: &str = "# Anotaciones ({{total}}) - {{fecha}}\n{{notas}}";
 
 impl Default for Settings {
     fn default() -> Self {
@@ -72,6 +121,7 @@ impl Default for Settings {
             height: None,
             pen_color: "#ff3b30".into(),
             pen_width: 4.0,
+            template: DEFAULT_TEMPLATE.into(),
         }
     }
 }
@@ -92,6 +142,9 @@ struct Store {
     /// The screen as it looked when the shortcut fired, held in memory for as
     /// long as the selector is open.
     frozen: Mutex<Option<capture::Frozen>>,
+    /// What was in front when the shortcut fired, read before our own panel
+    /// hides itself and stealing focus makes it unknowable.
+    pending_context: Mutex<Option<String>>,
     /// Bumped per capture so the webview cannot reuse the previous bitmap.
     version: AtomicU64,
     capturing: AtomicBool,
@@ -114,6 +167,7 @@ impl Store {
             settings: Mutex::new(read_json(base.join("settings.json"))),
             base,
             frozen: Mutex::new(None),
+            pending_context: Mutex::new(None),
             version: AtomicU64::new(0),
             capturing: AtomicBool::new(false),
             warnings: Mutex::new(vec![]),
@@ -136,32 +190,60 @@ impl Store {
         }
     }
 
-    fn markdown(&self) -> String {
-        render_markdown(&self.session.lock().unwrap().notes)
+    /// The clipboard payload, wrapped in the user's template. `only` limits it
+    /// to a subset of note ids.
+    fn markdown(&self, only: Option<&[String]>) -> String {
+        let notes = &self.session.lock().unwrap().notes;
+        let picked: Vec<Note> = match only {
+            Some(ids) => notes.iter().filter(|n| ids.contains(&n.id)).cloned().collect(),
+            None => notes.clone(),
+        };
+        let template = self.settings.lock().unwrap().template.clone();
+        apply_template(&template, &picked)
     }
 }
 
 /// Plain text carrying absolute image paths: the only shape that fits in one
 /// clipboard slot and still lets a local agent open every screenshot. It is
 /// also the archive format, so `parse_archive` has to round-trip it.
-fn render_markdown(notes: &[Note]) -> String {
-    let mut out = format!(
-        "# Anotaciones ({}) - {}\n",
-        notes.len(),
-        Local::now().format("%Y-%m-%d %H:%M")
-    );
+fn render_notes(notes: &[Note]) -> String {
+    let mut out = String::new();
     for (i, note) in notes.iter().enumerate() {
-        out.push_str(&format!("\n## {}\n", i + 1));
+        let label = priority_label(&note.priority);
+        if label.is_empty() {
+            out.push_str(&format!("\n## {}\n", i + 1));
+        } else {
+            out.push_str(&format!("\n## {} · {label}\n", i + 1));
+        }
+
         let text = note.text.trim();
         if !text.is_empty() {
             out.push_str(text);
             out.push('\n');
+        }
+        if let Some(ctx) = &note.context {
+            out.push_str(&format!("Contexto: {ctx}\n"));
         }
         if let Some(path) = &note.image {
             out.push_str(&format!("Captura: {path}\n"));
         }
     }
     out
+}
+
+/// A malformed template still has to produce usable output, so a missing
+/// `{{notas}}` gets the notes appended rather than silently dropped.
+fn apply_template(template: &str, notes: &[Note]) -> String {
+    let body = render_notes(notes);
+    let filled = template
+        .replace("{{total}}", &notes.len().to_string())
+        .replace("{{fecha}}", &Local::now().format("%Y-%m-%d %H:%M").to_string());
+
+    if filled.contains("{{notas}}") {
+        filled.replace("{{notas}}", &body)
+    } else {
+        format!("{filled}\n{body}")
+    }
 }
 
 /// Push the current list to the panel so it never has to poll.
@@ -188,6 +270,17 @@ fn start_capture(app: AppHandle) {
     let started = Instant::now();
 
     let main = app.get_webview_window(MAIN);
+
+    // Read the foreground window first: hiding our panel and then showing the
+    // selector both change what is in front.
+    let ours: Vec<isize> = [MAIN, OVERLAY]
+        .iter()
+        .filter_map(|label| app.get_webview_window(label))
+        .filter_map(|w| w.hwnd().ok())
+        .map(|h| h.0 as isize)
+        .collect();
+    *store.pending_context.lock().unwrap() = context::foreground(&ours);
+
     if let Some(w) = &main {
         let _ = w.hide();
     }
@@ -334,6 +427,8 @@ fn commit_capture(
             text,
             image: Some(dest.to_string_lossy().into_owned()),
             created_at: Local::now().format("%Y-%m-%d %H:%M").to_string(),
+            context: store.pending_context.lock().unwrap().clone(),
+            ..Note::default()
         });
         store.save_session();
     }
@@ -361,9 +456,87 @@ fn add_text_note(store: State<Store>, text: String) -> Vec<Note> {
         session.notes.push(Note {
             id: format!("n{seq:03}"),
             text,
-            image: None,
             created_at: Local::now().format("%Y-%m-%d %H:%M").to_string(),
+            ..Note::default()
         });
+    }
+    store.save_session();
+    store.session.lock().unwrap().notes.clone()
+}
+
+/// Paste an image sitting in the clipboard as a new note — for shots taken
+/// with Win+Shift+S, or ones someone else sent you.
+#[tauri::command]
+fn add_clipboard_note(
+    app: AppHandle,
+    store: State<Store>,
+    text: String,
+) -> Result<Vec<Note>, String> {
+    let image = app
+        .clipboard()
+        .read_image()
+        .map_err(|_| "no hay ninguna imagen en el portapapeles".to_string())?;
+
+    let rgba = xcap::image::RgbaImage::from_raw(image.width(), image.height(), image.rgba().to_vec())
+        .ok_or("la imagen del portapapeles no se pudo leer")?;
+
+    let (seq, session_id) = {
+        let mut session = store.session.lock().unwrap();
+        session.seq += 1;
+        (session.seq, session.id.clone())
+    };
+    let dest = store
+        .base
+        .join("capturas")
+        .join(&session_id)
+        .join(format!("{seq:02}.png"));
+    if let Some(parent) = dest.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+    rgba.save(&dest).map_err(|e| format!("no se pudo guardar la imagen: {e}"))?;
+
+    store.session.lock().unwrap().notes.push(Note {
+        id: format!("n{seq:03}"),
+        text,
+        image: Some(dest.to_string_lossy().into_owned()),
+        created_at: Local::now().format("%Y-%m-%d %H:%M").to_string(),
+        ..Note::default()
+    });
+    store.save_session();
+    Ok(store.session.lock().unwrap().notes.clone())
+}
+
+#[tauri::command]
+fn set_priority(store: State<Store>, id: String, priority: String) -> Vec<Note> {
+    {
+        let mut session = store.session.lock().unwrap();
+        if let Some(note) = session.notes.iter_mut().find(|n| n.id == id) {
+            // Reject anything the panel did not send us.
+            if PRIORITIES.contains(&priority.as_str()) {
+                note.priority = priority;
+            }
+        }
+    }
+    store.save_session();
+    store.session.lock().unwrap().notes.clone()
+}
+
+/// Reorder to match `ids`. Anything missing from the list keeps its relative
+/// order at the end, so a stale panel can never drop a note.
+#[tauri::command]
+fn reorder_notes(store: State<Store>, ids: Vec<String>) -> Vec<Note> {
+    {
+        let mut session = store.session.lock().unwrap();
+        let mut remaining = std::mem::take(&mut session.notes);
+        let mut ordered = Vec::with_capacity(remaining.len());
+
+        for id in &ids {
+            if let Some(pos) = remaining.iter().position(|n| &n.id == id) {
+                ordered.push(remaining.remove(pos));
+            }
+        }
+        ordered.extend(remaining);
+        session.notes = ordered;
     }
     store.save_session();
     store.session.lock().unwrap().notes.clone()
@@ -422,27 +595,45 @@ fn parse_archive(text: &str, id: &str) -> Session {
         .map(|t| t.format("%Y-%m-%d %H:%M").to_string())
         .unwrap_or_default();
 
-    let mut blocks: Vec<(Vec<&str>, Option<&str>)> = Vec::new();
+    struct Block<'a> {
+        lines: Vec<&'a str>,
+        image: Option<&'a str>,
+        context: Option<&'a str>,
+        priority: String,
+    }
+
+    let mut blocks: Vec<Block> = Vec::new();
     for line in text.lines() {
-        if line.starts_with("## ") {
-            blocks.push((Vec::new(), None));
+        if let Some(heading) = line.strip_prefix("## ") {
+            // "3 · bloqueante" — the label is only there when it is not normal.
+            let priority = heading
+                .split_once(" · ")
+                .map(|(_, label)| priority_from_label(label.trim()))
+                .unwrap_or_else(default_priority);
+            blocks.push(Block { lines: Vec::new(), image: None, context: None, priority });
         } else if let Some(path) = line.strip_prefix("Captura: ") {
             if let Some(block) = blocks.last_mut() {
-                block.1 = Some(path.trim());
+                block.image = Some(path.trim());
+            }
+        } else if let Some(ctx) = line.strip_prefix("Contexto: ") {
+            if let Some(block) = blocks.last_mut() {
+                block.context = Some(ctx.trim());
             }
         } else if let Some(block) = blocks.last_mut() {
-            block.0.push(line);
+            block.lines.push(line);
         }
     }
 
     let notes: Vec<Note> = blocks
         .into_iter()
         .enumerate()
-        .map(|(i, (lines, image))| Note {
+        .map(|(i, block)| Note {
             id: format!("n{:03}", i + 1),
-            text: lines.join("\n").trim().to_string(),
-            image: image.map(str::to_string),
+            text: block.lines.join("\n").trim().to_string(),
+            image: block.image.map(str::to_string),
             created_at: created_at.clone(),
+            priority: block.priority,
+            context: block.context.map(str::to_string),
         })
         .collect();
 
@@ -526,7 +717,13 @@ fn archive_notes(store: State<Store>) -> Result<String, String> {
     if store.session.lock().unwrap().notes.is_empty() {
         return Err("no hay nada que guardar".into());
     }
-    let markdown = store.markdown();
+    // Always the canonical format, never the user's template: the archive is
+    // what `parse_archive` reads back, so a customised preamble must not be
+    // able to make saved notes unopenable.
+    let markdown = {
+        let session = store.session.lock().unwrap();
+        apply_template(DEFAULT_TEMPLATE, &session.notes)
+    };
     let dest = {
         let session = store.session.lock().unwrap();
         store.base.join("guardadas").join(format!("{}.md", session.id))
@@ -555,9 +752,10 @@ fn clear_notes(store: State<Store>) -> Vec<Note> {
     vec![]
 }
 
+/// `ids` limits the copy to a subset; None copies everything.
 #[tauri::command]
-fn build_markdown(store: State<Store>) -> String {
-    store.markdown()
+fn build_markdown_for(store: State<Store>, ids: Option<Vec<String>>) -> String {
+    store.markdown(ids.as_deref())
 }
 
 #[tauri::command]
@@ -607,7 +805,7 @@ fn main() {
                         let app = app.clone();
                         std::thread::spawn(move || start_capture(app));
                     } else if shortcut == &copy_key {
-                        let markdown = app.state::<Store>().markdown();
+                        let markdown = app.state::<Store>().markdown(None);
                         let _ = app.clipboard().write_text(markdown);
                     }
                 })
@@ -674,7 +872,10 @@ fn main() {
             list_archives,
             open_archive,
             clear_notes,
-            build_markdown,
+            build_markdown_for,
+            add_clipboard_note,
+            set_priority,
+            reorder_notes,
             get_settings,
             put_settings,
             open_base_dir,
@@ -688,12 +889,11 @@ mod tests {
     use super::*;
 
     fn note(text: &str, image: Option<&str>) -> Note {
-        Note {
-            id: String::new(),
-            text: text.into(),
-            image: image.map(str::to_string),
-            created_at: String::new(),
-        }
+        Note { text: text.into(), image: image.map(str::to_string), ..Note::default() }
+    }
+
+    fn canonical(notes: &[Note]) -> String {
+        apply_template(DEFAULT_TEMPLATE, notes)
     }
 
     /// The Markdown is the archive format, so whatever is written must come
@@ -706,7 +906,7 @@ mod tests {
             note("Sin captura", None),
             note("", Some(r"C:\shots\04.png")),
         ];
-        let parsed = parse_archive(&render_markdown(&notes), "20260903-155711");
+        let parsed = parse_archive(&canonical(&notes), "20260903-155711");
 
         assert_eq!(parsed.notes.len(), notes.len());
         for (before, after) in notes.iter().zip(&parsed.notes) {
@@ -723,8 +923,45 @@ mod tests {
             note("primera", Some(r"C:\shots\01.png")),
             note("quinta", Some(r"C:\shots\05.png")),
         ];
-        let parsed = parse_archive(&render_markdown(&notes), "20260903-155711");
+        let parsed = parse_archive(&canonical(&notes), "20260903-155711");
         assert_eq!(parsed.seq, 5);
+    }
+
+    /// Priority and context travel in the Markdown, so reopening a saved list
+    /// must not quietly downgrade every note to normal.
+    #[test]
+    fn priority_and_context_round_trip() {
+        let mut notes = vec![note("bloquea el login", Some(r"C:\shots.png")), note("detalle", None)];
+        notes[0].priority = "blocker".into();
+        notes[0].context = Some("Dashboard - Chrome · 1280×900".into());
+        notes[1].priority = "minor".into();
+
+        let parsed = parse_archive(&canonical(&notes), "20260903-155711");
+
+        assert_eq!(parsed.notes[0].priority, "blocker");
+        assert_eq!(parsed.notes[0].context.as_deref(), Some("Dashboard - Chrome · 1280×900"));
+        assert_eq!(parsed.notes[0].text, "bloquea el login");
+        assert_eq!(parsed.notes[1].priority, "minor");
+        assert_eq!(parsed.notes[1].context, None);
+    }
+
+    /// A template without the placeholder must still carry the notes.
+    #[test]
+    fn template_without_placeholder_keeps_the_notes() {
+        let notes = vec![note("algo va mal", None)];
+        let out = apply_template("Solo un preambulo", &notes);
+        assert!(out.starts_with("Solo un preambulo"));
+        assert!(out.contains("algo va mal"));
+    }
+
+    #[test]
+    fn template_fills_its_placeholders() {
+        let notes = vec![note("uno", None), note("dos", None)];
+        let out = apply_template("Total: {{total}}
+{{notas}}", &notes);
+        assert!(out.starts_with("Total: 2
+"));
+        assert!(out.contains("uno") && out.contains("dos"));
     }
 
     #[test]

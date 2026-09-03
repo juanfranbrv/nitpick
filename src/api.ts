@@ -6,7 +6,18 @@ export interface Note {
   /** Absolute path to the PNG, or null for a text-only note. */
   image: string | null;
   created_at: string;
+  /** One of `PRIORITIES`. */
+  priority: string;
+  /** Window title and size captured with the screenshot, when known. */
+  context: string | null;
 }
+
+/** Cycled in this order by the chip on each note. */
+export const PRIORITIES = [
+  { key: "normal", label: "normal" },
+  { key: "blocker", label: "bloqueante" },
+  { key: "minor", label: "menor" },
+];
 
 export interface Archive {
   id: string;
@@ -26,7 +37,11 @@ export interface Settings {
   height: number | null;
   pen_color: string;
   pen_width: number;
+  /** Wrapper for the copied text. `{{notas}}`, `{{total}}`, `{{fecha}}`. */
+  template: string;
 }
+
+export const DEFAULT_TEMPLATE = "# Anotaciones ({{total}}) - {{fecha}}\n{{notas}}";
 
 /** Sent by the backend when a fresh screenshot is waiting for the selector. */
 export interface CaptureReady {
@@ -51,7 +66,15 @@ export const archiveNotes = () => invoke<string>("archive_notes");
 export const listArchives = () => invoke<Archive[]>("list_archives");
 export const openArchive = (id: string) => invoke<Note[]>("open_archive", { id });
 export const clearNotes = () => invoke<Note[]>("clear_notes");
-export const buildMarkdown = () => invoke<string>("build_markdown");
+export const setPriority = (id: string, priority: string) =>
+  invoke<Note[]>("set_priority", { id, priority });
+export const reorderNotes = (ids: string[]) => invoke<Note[]>("reorder_notes", { ids });
+export const addClipboardNote = (text: string) =>
+  invoke<Note[]>("add_clipboard_note", { text });
+
+/** `ids` null copies everything; otherwise only those notes. */
+export const buildMarkdown = (ids: string[] | null = null) =>
+  invoke<string>("build_markdown_for", { ids });
 export const beginCapture = () => invoke<void>("begin_capture");
 /** `strokes` is a base64 PNG of the marker layer, or null if nothing was drawn. */
 export const commitCapture = (sel: Selection, text: string, strokes: string | null) =>

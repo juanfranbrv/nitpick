@@ -19,6 +19,7 @@
         <h1 data-tauri-drag-region>Anotador</h1>
         <span class="count" id="count">0</span>
         <button id="btn-shot" title="Capturar región (Ctrl+Alt+A)">✂</button>
+        <button id="btn-paste" title="Pegar imagen del portapapeles (Ctrl+V)">📋</button>
         <button id="btn-archives" title="Notas guardadas">🗂</button>
         <button id="btn-folder" title="Abrir carpeta de capturas">📁</button>
         <button id="btn-settings" title="Ajustes">⚙</button>
@@ -30,6 +31,7 @@
       <div class="empty" id="empty">
         <p>Sin anotaciones todavía.</p>
         <p class="hint"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> captura una región y abre el campo de texto.</p>
+        <p class="hint"><kbd>Ctrl</kbd>+<kbd>V</kbd> pega una imagen del portapapeles.</p>
       </div>
 
       <footer class="card-foot">
@@ -75,6 +77,15 @@
               <input type="range" id="opacity" min="20" max="100" step="5" />
               <output id="opacity-out">100%</output>
             </div>
+          </fieldset>
+          <fieldset>
+            <legend>Plantilla de salida</legend>
+            <p class="fieldset-hint">
+              Envoltorio del texto copiado. <code>{{notas}}</code> es el listado;
+              <code>{{total}}</code> y <code>{{fecha}}</code> son opcionales.
+            </p>
+            <textarea id="template" rows="4" spellcheck="false"></textarea>
+            <button type="button" id="btn-template-reset" class="ghost">Restaurar la de serie</button>
           </fieldset>
         </div>
       </section>

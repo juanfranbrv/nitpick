@@ -111,9 +111,22 @@ html, body {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 8px 16px;
+  /* The hint must not swallow a drag that starts underneath it; only its
+     button takes the mouse. */
   pointer-events: none;
   box-shadow: 0 6px 24px var(--shadow);
 }
+#tip button {
+  pointer-events: auto;
+  font: inherit;
+  color: var(--accent);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  padding: 0;
+  cursor: pointer;
+}
+#tip button:hover { color: var(--accent-hi); }
 
 .selecting #tip, .composing #tip,
 .selecting #crosshair-x, .selecting #crosshair-y,
@@ -144,15 +157,29 @@ body.composing { cursor: default; }
   margin-bottom: 9px;
   border-bottom: 1px solid var(--line);
 }
-.tools-label {
+.tool-picker { display: flex; gap: 2px; }
+.tool {
+  width: 26px;
+  height: 24px;
+  font: 14px/1 inherit;
   color: var(--dim);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.tool:hover { background: var(--bg-2); color: var(--fg); }
+.tool.on {
+  color: var(--on-accent);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .swatches, .widths { display: flex; gap: 4px; }
 .widths { margin-left: auto; }
+
+/* Colour does nothing for the blur tool, so it stops inviting a click. */
+.swatches.dimmed { opacity: 0.35; pointer-events: none; }
 
 .swatch {
   width: 18px;

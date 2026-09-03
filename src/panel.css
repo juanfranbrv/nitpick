@@ -159,13 +159,53 @@ button:hover { background: color-mix(in srgb, var(--fg) 9%, transparent); color:
   border-radius: 9px;
 }
 .note:hover { border-color: var(--line-strong); }
+.note.dragging { opacity: 0.45; }
+/* Where the dragged note would land. */
+.note.drop-above { box-shadow: inset 0 2px 0 var(--accent); }
+.note.drop-below { box-shadow: inset 0 -2px 0 var(--accent); }
 
+.note-pick { accent-color: var(--accent); margin: 3px 0 0; flex: none; }
+
+/* Doubles as the drag handle: the whole row cannot be draggable or selecting
+   text in the note would start a drag instead. */
 .note-idx {
   color: var(--dim);
   font-variant-numeric: tabular-nums;
   font-size: 11px;
   padding-top: 2px;
   min-width: 14px;
+  cursor: grab;
+  flex: none;
+}
+.note-idx:active { cursor: grabbing; }
+
+.note-prio {
+  align-self: flex-start;
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--dim);
+  flex: none;
+}
+.note-prio:hover { border-color: var(--fg); }
+.note-prio[data-priority="blocker"] {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+}
+.note-prio[data-priority="minor"] { opacity: 0.6; }
+
+.note-context {
+  display: block;
+  color: var(--dim);
+  font-size: 11px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .note-thumb {
   width: 64px;
@@ -353,6 +393,29 @@ kbd {
 }
 .settings input[type="radio"] { accent-color: var(--accent); margin: 0; }
 .settings fieldset + fieldset { margin-top: 10px; }
+
+.fieldset-hint { color: var(--dim); font-size: 11.5px; margin: 6px 0 8px; }
+.fieldset-hint code {
+  font: 11px/1 ui-monospace, "Cascadia Mono", monospace;
+  background: var(--bg-2);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+#template {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  color: var(--fg);
+  font: 12px/1.5 ui-monospace, "Cascadia Mono", monospace;
+  padding: 8px 9px;
+  resize: vertical;
+  user-select: text;
+  cursor: text;
+  margin-bottom: 8px;
+}
+#template:focus { outline: none; border-color: var(--line-strong); }
+#btn-template-reset { flex: none; width: 100%; }
 
 .slider { display: flex; align-items: center; gap: 10px; padding: 8px 2px 2px; }
 .slider input[type="range"] { flex: 1; accent-color: var(--accent); margin: 0; }
