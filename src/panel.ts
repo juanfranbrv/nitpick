@@ -493,6 +493,18 @@ opacity.addEventListener("input", () => {
 // Dragging a slider fires per pixel; only write once it is let go.
 opacity.addEventListener("change", () => void putSettings(settings));
 
+const excludeCapture = el<HTMLInputElement>("exclude-capture");
+
+excludeCapture.addEventListener("change", async () => {
+  settings.exclude_from_capture = excludeCapture.checked;
+  await putSettings(settings);
+  toast(
+    excludeCapture.checked
+      ? "El panel queda fuera de las capturas"
+      : "El panel se ocultará durante cada captura",
+  );
+});
+
 const template = el<HTMLTextAreaElement>("template");
 
 template.addEventListener("change", () => {
@@ -526,6 +538,7 @@ if (chosen) chosen.checked = true;
 opacity.value = String(Math.round(settings.opacity * 100));
 opacityOut.value = `${opacity.value}%`;
 template.value = settings.template;
+excludeCapture.checked = settings.exclude_from_capture;
 
 notes = await listNotes();
 render();

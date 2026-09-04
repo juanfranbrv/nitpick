@@ -35,6 +35,8 @@ export interface Settings {
   /** Logical size the panel was last left at; null until it is first resized. */
   width: number | null;
   height: number | null;
+  /** Keep the panel out of every screen capture, not only ours. */
+  exclude_from_capture: boolean;
   pen_color: string;
   pen_width: number;
   /** Wrapper for the copied text. `{{notas}}`, `{{total}}`, `{{fecha}}`. */

@@ -102,6 +102,11 @@ struct Settings {
     /// so the initial size can be worked out from the actual screen.
     width: Option<f64>,
     height: Option<f64>,
+    /// Keep the panel out of screen captures at the OS level. On by default:
+    /// it removes the hide-and-repaint wait and the blink. Off makes the panel
+    /// visible to other recorders again, at the cost of hiding it for ~70 ms
+    /// on every capture of our own.
+    exclude_from_capture: bool,
     pen_color: String,
     pen_width: f64,
     /// Wrapper for the copied text. `{{notas}}` is required; `{{total}}` and
@@ -119,6 +124,7 @@ impl Default for Settings {
             opacity: 1.0,
             width: None,
             height: None,
+            exclude_from_capture: true,
             pen_color: "#ff3b30".into(),
             pen_width: 4.0,
             template: DEFAULT_TEMPLATE.into(),
@@ -248,6 +254,23 @@ fn apply_template(template: &str, notes: &[Note]) -> String {
     } else {
         format!("{filled}\n{body}")
     }
+}
+
+/// Put the capture-exclusion setting into effect and record whether it took,
+/// which is what decides between the fast path and hide-and-wait.
+fn apply_capture_exclusion(app: &AppHandle) -> bool {
+    let store = app.state::<Store>();
+    let wanted = store.settings.lock().unwrap().exclude_from_capture;
+
+    let applied = [MAIN, OVERLAY]
+        .iter()
+        .filter_map(|label| app.get_webview_window(label))
+        .filter_map(|w| w.hwnd().ok())
+        .all(|h| win::set_capture_exclusion(h.0 as isize, wanted));
+
+    let effective = wanted && applied;
+    store.hidden_from_capture.store(effective, Ordering::SeqCst);
+    effective
 }
 
 /// Push the current list to the panel so it never has to poll.
@@ -785,6 +808,9 @@ fn put_settings(app: AppHandle, settings: Settings) -> Settings {
         current.clone()
     };
     store.save_settings();
+    // The exclusion is an OS-level window flag, so toggling it has to reach
+    // Windows now rather than at the next capture.
+    apply_capture_exclusion(&app);
     let _ = app.emit("settings-changed", saved.clone());
     saved
 }
@@ -861,18 +887,8 @@ fn main() {
                 .visible(false)
                 .build()?;
 
-            // Keep our own windows out of the screenshot at the OS level. When
-            // this works the capture path skips hiding the panel entirely.
-            let excluded = [MAIN, OVERLAY]
-                .iter()
-                .filter_map(|label| app.get_webview_window(label))
-                .filter_map(|w| w.hwnd().ok())
-                .all(|h| win::exclude_from_capture(h.0 as isize));
-            app.state::<Store>()
-                .hidden_from_capture
-                .store(excluded, Ordering::SeqCst);
-            if !excluded {
-                eprintln!("sin exclusión de captura: se ocultará el panel en cada captura");
+            if !apply_capture_exclusion(app.handle()) {
+                eprintln!("el panel se ocultará durante cada captura");
             }
 
             // Another app may already own one of these. That costs a shortcut,

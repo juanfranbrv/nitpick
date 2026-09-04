@@ -81,8 +81,14 @@ abriéndose. Un test de ida y vuelta (`cargo test`) protege esa propiedad.
 
 ## Ajustes
 
-Engranaje del panel: tema (oscuro / claro / según Windows), opacidad de la ventana y
-**plantilla de salida**. El tamaño del panel se recuerda solo — lo estiras, y ahí se
+Engranaje del panel: tema (oscuro / claro / según Windows), opacidad de la ventana,
+**plantilla de salida** y si el panel queda fuera de las capturas.
+
+Esa última merece explicación: activada (por defecto), Windows deja el panel fuera de
+**toda** captura de pantalla, no solo de las nuestras — también de OBS, Teams,
+`Win`+`Shift`+`S` y cualquier grabación. A cambio, la captura propia es unos 70 ms más
+rápida y el panel no parpadea. Desactívala si alguna vez necesitas que el panel salga
+en una grabación o una demo. El tamaño del panel se recuerda solo — lo estiras, y ahí se
 queda entre colapsos y entre ejecuciones. Todo vive en `settings.json`.
 
 La plantilla envuelve el texto copiado, porque Claude Code, Codex y OpenCode no
@@ -153,7 +159,8 @@ Cuatro decisiones sostienen la latencia entre pulsar el atajo y ver el selector
 - El panel **no se oculta**: se le pide a Windows que lo excluya de las capturas
   (`SetWindowDisplayAffinity`). Ocultarlo obligaba a esperar ~70 ms a que el
   compositor repintase — la mitad de lo que quedaba — y hacía parpadear el panel en
-  cada atajo. Si la API falla, se vuelve al camino de ocultar y esperar.
+  cada atajo. Si la API falla, o si desactivas la opción, se vuelve al camino de
+  ocultar y esperar.
 
 Un detalle que costó dos intentos: optimizar solo las dependencias (`profile.dev.package."*"`)
 no bastaba, porque el bucle de composición vive en *este* crate. Con `profile.dev`

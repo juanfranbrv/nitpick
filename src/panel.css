@@ -412,7 +412,11 @@ kbd {
   padding: 7px 2px;
   cursor: pointer;
 }
-.settings input[type="radio"] { accent-color: var(--accent); margin: 0; }
+.settings input[type="radio"],
+.settings input[type="checkbox"] { accent-color: var(--accent); margin: 0; }
+/* A hint under a checkbox explains the trade, so it lines up with the label
+   rather than the box. */
+.settings label + .fieldset-hint { margin: 4px 0 0 24px; }
 .settings fieldset + fieldset { margin-top: 10px; }
 
 .fieldset-hint { color: var(--dim); font-size: 11.5px; margin: 6px 0 8px; }

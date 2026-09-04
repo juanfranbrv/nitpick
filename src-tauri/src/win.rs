@@ -7,24 +7,29 @@
 //! which is browser specific and fails quietly when it drifts. The title plus
 //! the viewport size is what can be had reliably.
 
-/// Ask Windows to leave this window out of any screen capture.
+/// Ask Windows to leave this window out of screen captures, or stop asking.
 ///
-/// Worth more than it looks: without it the panel has to be hidden and the
-/// compositor given ~70 ms to repaint before the screen can be frozen, which
-/// was half the remaining capture latency and made the panel visibly blink on
-/// every shortcut. Needs Windows 10 2004 or newer; the caller keeps the
-/// hide-and-wait path for when this returns false.
+/// Worth more than it looks: with it, the panel need not be hidden and the
+/// compositor need not be given ~70 ms to repaint before the screen is frozen,
+/// which was half the remaining capture latency and made the panel blink on
+/// every shortcut.
+///
+/// But the exclusion is not ours alone — it applies to *every* screen capture,
+/// including other people's recorders and screen sharing. That is why it is a
+/// setting rather than a given. Needs Windows 10 2004 or newer; the caller
+/// keeps the hide-and-wait path for when this returns false.
 #[cfg(windows)]
-pub fn exclude_from_capture(hwnd: isize) -> bool {
+pub fn set_capture_exclusion(hwnd: isize, on: bool) -> bool {
     use windows::Win32::Foundation::HWND;
     use windows::Win32::UI::WindowsAndMessaging::{
-        SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE,
+        SetWindowDisplayAffinity, WDA_EXCLUDEFROMCAPTURE, WDA_NONE,
     };
-    unsafe { SetWindowDisplayAffinity(HWND(hwnd as *mut _), WDA_EXCLUDEFROMCAPTURE).is_ok() }
+    let mode = if on { WDA_EXCLUDEFROMCAPTURE } else { WDA_NONE };
+    unsafe { SetWindowDisplayAffinity(HWND(hwnd as *mut _), mode).is_ok() }
 }
 
 #[cfg(not(windows))]
-pub fn exclude_from_capture(_hwnd: isize) -> bool {
+pub fn set_capture_exclusion(_hwnd: isize, _on: bool) -> bool {
     false
 }
 
