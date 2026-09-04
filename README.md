@@ -5,6 +5,7 @@
 **An always-on-top notepad for reviewing your own UI — collect a batch of screenshots
 and notes, then paste all of them into a coding agent in one go.**
 
+[![Latest release](https://img.shields.io/github/v/release/juanfranbrv/nitpick?label=download&color=2f6bf3)](https://github.com/juanfranbrv/nitpick/releases/latest/download/Nitpick.exe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 ![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
 ![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB)
@@ -56,9 +57,16 @@ the agent can read.*
 
 ## Install
 
-**Download** the latest `Nitpick.exe` from the
-[Releases](https://github.com/juanfranbrv/nitpick/releases) page. It is a single
-self-contained executable — no installer, no runtime to add. Windows 10 (2004+) or 11.
+**[Download Nitpick.exe](https://github.com/juanfranbrv/nitpick/releases/latest/download/Nitpick.exe)**
+— one self-contained executable, no installer and no runtime to add. Windows 10
+(2004+) or 11. Every [release](https://github.com/juanfranbrv/nitpick/releases) is
+listed too.
+
+It writes nothing outside `%USERPROFILE%\Nitpick\`, so uninstalling is deleting the
+`.exe` and that folder.
+
+The binary is unsigned, so on first run Windows SmartScreen will most likely warn you:
+choose **More info** and then **Run anyway**, or build it yourself below.
 
 **Or build from source:**
 
