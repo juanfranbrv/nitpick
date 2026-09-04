@@ -1,3 +1,5 @@
+<img src="src-tauri/icons/128x128.png" width="76" align="left" alt="" />
+
 # Nitpick
 
 **Un bloc de notas siempre visible para revisar tu propia interfaz: acumulas capturas y

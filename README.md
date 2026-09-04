@@ -1,3 +1,5 @@
+<img src="src-tauri/icons/128x128.png" width="76" align="left" alt="" />
+
 # Nitpick
 
 **An always-on-top notepad for reviewing your own UI — collect a batch of screenshots
