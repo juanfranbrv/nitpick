@@ -1,4 +1,4 @@
-# Anotador
+# Nitpick
 
 **Un bloc de notas siempre visible para revisar tu propia interfaz: acumulas capturas y
 notas, y las pegas todas de una vez en un agente de programación.**
@@ -21,7 +21,7 @@ La solución evidente —«lo junto todo y luego lo pego»— choca con un lími
 portapapeles de Windows admite exactamente un elemento.** O texto, o una imagen. No hay
 forma de pegar ocho notas y cinco capturas de una vez.
 
-La respuesta del Anotador es pegar **texto que lleva las capturas por ruta absoluta**:
+La respuesta del Nitpick es pegar **texto que lleva las capturas por ruta absoluta**:
 
 ```
 # Anotaciones (2) - 2026-09-03 12:40
@@ -29,11 +29,11 @@ La respuesta del Anotador es pegar **texto que lleva las capturas por ruta absol
 ## 1 · bloqueante
 El sidebar se solapa con el header por debajo de 900px.
 Contexto: Dashboard — MiApp — Chrome · 1280×900
-Captura: C:\Users\tu-usuario\Anotador\capturas\20260903-1204\01.png
+Captura: C:\Users\tu-usuario\Nitpick\capturas\20260903-1204\01.png
 
 ## 2
 El botón de submit no muestra estado de carga.
-Captura: C:\Users\tu-usuario\Anotador\capturas\20260903-1204\02.png
+Captura: C:\Users\tu-usuario\Nitpick\capturas\20260903-1204\02.png
 ```
 
 Es la única forma que cabe en una sola pegada y sigue dando al agente acceso a todas las
@@ -49,8 +49,8 @@ prioridad que el agente puede leer.*
 
 ## Instalación
 
-**Descarga** el último `Anotador.exe` de la página de
-[Releases](https://github.com/TU-USUARIO/anotador/releases). Es un único ejecutable
+**Descarga** el último `Nitpick.exe` de la página de
+[Releases](https://github.com/juanfranbrv/nitpick/releases). Es un único ejecutable
 autocontenido: sin instalador y sin runtime que añadir. Windows 10 (2004+) u 11.
 
 **O compílalo tú:**
@@ -60,7 +60,7 @@ pnpm install
 pnpm tauri build --no-bundle
 ```
 
-El binario aparece en `src-tauri/target/release/anotador.exe`. Necesita
+El binario aparece en `src-tauri/target/release/nitpick.exe`. Necesita
 [Rust](https://rustup.rs), [Node](https://nodejs.org) y las herramientas de compilación
 de MSVC.
 
@@ -131,7 +131,7 @@ El engranaje del panel: tema (oscuro / claro / según Windows), opacidad de la v
 **plantilla de salida** y si el panel queda fuera de las capturas.
 
 Esa última merece explicación. Activada (por defecto), Windows deja el panel fuera de
-**toda** captura de pantalla, no solo de las del Anotador — también de OBS, Teams,
+**toda** captura de pantalla, no solo de las del Nitpick — también de OBS, Teams,
 <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> y cualquier grabación. A cambio, la captura
 propia es unos 70 ms más rápida y el panel no parpadea. Desactívala si alguna vez
 necesitas que el panel salga en una grabación o una demo.
@@ -150,7 +150,7 @@ ejecuciones. Todo vive en `settings.json`.
 ## Dónde se guarda todo
 
 ```
-%USERPROFILE%\Anotador\
+%USERPROFILE%\Nitpick\
   session.json              lista de anotaciones en curso (sobrevive a reinicios)
   settings.json             ajustes
   capturas\<sesión>\NN.png  los recortes
@@ -169,7 +169,7 @@ ejecuciones. Todo vive en `settings.json`.
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Deshacer el último trazo |
 | <kbd>Esc</kbd> | Cancelar la captura |
 
-Si otro programa ya usa uno de los atajos globales, el Anotador arranca igual y te lo
+Si otro programa ya usa uno de los atajos globales, el Nitpick arranca igual y te lo
 avisa en el panel: pierdes el atajo, no la aplicación.
 
 ## Cómo está montado
@@ -229,7 +229,7 @@ cargo test          # desde src-tauri/
 ```
 
 Ojo: la instancia de desarrollo retiene los atajos globales, así que cierra antes
-cualquier Anotador de release o chocarán.
+cualquier Nitpick de release o chocarán.
 
 Se agradecen incidencias y pull requests.
 

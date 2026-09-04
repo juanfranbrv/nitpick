@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Anotador",
+  "productName": "Nitpick",
   "version": "0.1.0",
-  "identifier": "com.anotador.app",
+  "identifier": "dev.juanfranbrv.nitpick",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:5183",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Anotador",
+        "title": "Nitpick",
         "width": 380,
         "height": 520,
         "x": 60,

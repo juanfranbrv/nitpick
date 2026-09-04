@@ -1,4 +1,4 @@
-# Anotador
+# Nitpick
 
 **An always-on-top notepad for reviewing your own UI — collect a batch of screenshots
 and notes, then paste all of them into a coding agent in one go.**
@@ -23,7 +23,7 @@ The obvious fix — "collect everything, then paste it" — runs into a hard lim
 **the Windows clipboard holds exactly one item.** Either text, or one image. There is
 no way to paste eight notes and five screenshots in a single paste.
 
-Anotador's answer is to paste **text that carries the screenshots by absolute path**:
+Nitpick's answer is to paste **text that carries the screenshots by absolute path**:
 
 ```
 # Anotaciones (2) - 2026-09-03 12:40
@@ -31,11 +31,11 @@ Anotador's answer is to paste **text that carries the screenshots by absolute pa
 ## 1 · bloqueante
 The sidebar overlaps the header below 900px.
 Contexto: Dashboard — MyApp — Chrome · 1280×900
-Captura: C:\Users\you\Anotador\capturas\20260903-1204\01.png
+Captura: C:\Users\you\Nitpick\capturas\20260903-1204\01.png
 
 ## 2
 The submit button shows no loading state.
-Captura: C:\Users\you\Anotador\capturas\20260903-1204\02.png
+Captura: C:\Users\you\Nitpick\capturas\20260903-1204\02.png
 ```
 
 That is the only shape that fits in one clipboard slot while still giving the agent
@@ -51,8 +51,8 @@ priority the agent can read.*
 
 ## Install
 
-**Download** the latest `Anotador.exe` from the
-[Releases](https://github.com/YOUR-USERNAME/anotador/releases) page. It is a single
+**Download** the latest `Nitpick.exe` from the
+[Releases](https://github.com/juanfranbrv/nitpick/releases) page. It is a single
 self-contained executable — no installer, no runtime to add. Windows 10 (2004+) or 11.
 
 **Or build from source:**
@@ -62,7 +62,7 @@ pnpm install
 pnpm tauri build --no-bundle
 ```
 
-The binary lands in `src-tauri/target/release/anotador.exe`. Requires
+The binary lands in `src-tauri/target/release/nitpick.exe`. Requires
 [Rust](https://rustup.rs), [Node](https://nodejs.org) and the MSVC build tools.
 
 ## How you use it
@@ -132,8 +132,8 @@ The panel's gear: theme (dark / light / follow Windows), window opacity, the **o
 template**, and whether the panel stays out of screen captures.
 
 That last one deserves a note. Enabled (the default), Windows keeps the panel out of
-**every** screen capture, not only Anotador's — that includes OBS, Teams,
-<kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> and any recording. In exchange, Anotador's
+**every** screen capture, not only Nitpick's — that includes OBS, Teams,
+<kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> and any recording. In exchange, Nitpick's
 own capture is ~70 ms faster and the panel does not blink. Turn it off if you ever need
 the panel to appear in a recording or a demo.
 
@@ -150,7 +150,7 @@ and across runs. All of it lives in `settings.json`.
 ## Where everything is stored
 
 ```
-%USERPROFILE%\Anotador\
+%USERPROFILE%\Nitpick\
   session.json               the list in progress (survives restarts)
   settings.json              settings
   capturas\<session>\NN.png  the crops
@@ -169,7 +169,7 @@ and across runs. All of it lives in `settings.json`.
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Undo the last stroke |
 | <kbd>Esc</kbd> | Cancel the capture |
 
-If another program already owns one of the global shortcuts, Anotador starts anyway and
+If another program already owns one of the global shortcuts, Nitpick starts anyway and
 tells you in the panel: you lose the shortcut, not the application.
 
 ## How it works
@@ -224,7 +224,7 @@ cargo test          # from src-tauri/
 ```
 
 Note that the dev instance holds the global shortcuts, so close any release build of
-Anotador first or they will collide.
+Nitpick first or they will collide.
 
 Issues and pull requests are welcome.
 

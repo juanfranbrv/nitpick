@@ -871,7 +871,7 @@ fn main() {
             }
         })
         .setup(move |app| {
-            let base = app.path().home_dir()?.join("Anotador");
+            let base = app.path().home_dir()?.join("Nitpick");
             std::fs::create_dir_all(&base)?;
             app.manage(Store::load(base));
 
@@ -929,7 +929,7 @@ fn main() {
             quit,
         ])
         .run(tauri::generate_context!())
-        .expect("error al arrancar Anotador");
+        .expect("error al arrancar Nitpick");
 }
 
 #[cfg(test)]
