@@ -40,11 +40,17 @@ Es la única forma que cabe en una sola pegada y sigue dando al agente acceso a 
 imágenes. Lo pegas en **Claude Code**, **Codex** u **OpenCode** y el agente abre las
 capturas solo.
 
-## Captura de pantalla
+## En movimiento
+
+![Atajo, recorte, nota y copiado: el ciclo entero en diez segundos](docs/demo.gif)
+
+El atajo congela la pantalla, el arrastre encuadra el defecto, la nota se escribe ahí
+mismo y un botón deja la tanda en el portapapeles. El panel se aparta mientras
+seleccionas y vuelve con la nota ya en la lista.
 
 ![El panel a media revisión, con cinco notas recogidas](docs/screenshot.png)
 
-*Una revisión en curso. Cada nota conserva su recorte, la ventana de la que salió y una
+*Una revisión más larga. Cada nota conserva su recorte, la ventana de la que salió y una
 prioridad que el agente puede leer.*
 
 ## Instalación
@@ -133,7 +139,7 @@ El engranaje del panel: tema (oscuro / claro / según Windows), opacidad de la v
 Esa última merece explicación. Activada (por defecto), Windows deja el panel fuera de
 **toda** captura de pantalla, no solo de las del Nitpick — también de OBS, Teams,
 <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> y cualquier grabación. A cambio, la captura
-propia es unos 70 ms más rápida y el panel no parpadea. Desactívala si alguna vez
+propia es unos 250 ms más rápida y el panel no parpadea. Desactívala si alguna vez
 necesitas que el panel salga en una grabación o una demo.
 
 La **plantilla** envuelve el texto copiado, porque Claude Code, Codex y OpenCode no
@@ -194,7 +200,7 @@ empezó en 769 ms y acabó en 112 ms:
   `imageops::replace`, que recorre píxel a píxel: 271 ms de 408 en un equipo de dos
   pantallas.
 - El panel **no se oculta**: se le pide a Windows que lo excluya de las capturas
-  (`SetWindowDisplayAffinity`). Ocultarlo obligaba a esperar ~70 ms a que el compositor
+  (`SetWindowDisplayAffinity`). Ocultarlo obligaba a esperar a que el compositor
   repintase — la mitad de lo que quedaba — y hacía parpadear el panel en cada atajo.
 
 Un detalle que costó dos intentos: optimizar solo las dependencias

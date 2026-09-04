@@ -317,7 +317,11 @@ fn start_capture(app: AppHandle) {
         if let Some(w) = &main {
             let _ = w.hide();
         }
-        std::thread::sleep(Duration::from_millis(70));
+        // 70 ms was not enough on a real machine: the panel showed through,
+        // ghosted, in its own capture. `hide()` only asks, and the compositor
+        // repaints on its own schedule. This path is already the slow one, so
+        // buy the margin rather than risk the panel appearing in a screenshot.
+        std::thread::sleep(Duration::from_millis(250));
     }
 
     let ready = match capture::freeze() {

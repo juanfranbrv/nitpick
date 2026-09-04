@@ -42,12 +42,18 @@ That is the only shape that fits in one clipboard slot while still giving the ag
 access to every image. Paste it into **Claude Code**, **Codex** or **OpenCode** and the
 agent opens the screenshots itself.
 
-## Screenshot
+## See it work
+
+![Shortcut, drag, note, copy — the whole loop in ten seconds](docs/demo.gif)
+
+The shortcut freezes the screen, the drag frames the defect, the note is typed on the
+spot, and one button puts the batch on the clipboard. The panel steps out of the way
+while you select and comes back with the note in the list.
 
 ![The panel mid-review, with five notes collected](docs/screenshot.png)
 
-*A review in progress. Each note keeps its own crop, the window it came from, and a
-priority the agent can read.*
+*A longer review. Each note keeps its own crop, the window it came from, and a priority
+the agent can read.*
 
 ## Install
 
@@ -134,7 +140,7 @@ template**, and whether the panel stays out of screen captures.
 That last one deserves a note. Enabled (the default), Windows keeps the panel out of
 **every** screen capture, not only Nitpick's — that includes OBS, Teams,
 <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> and any recording. In exchange, Nitpick's
-own capture is ~70 ms faster and the panel does not blink. Turn it off if you ever need
+own capture is ~250 ms faster and the panel does not blink. Turn it off if you ever need
 the panel to appear in a recording or a demo.
 
 The **template** wraps the copied text, because Claude Code, Codex and OpenCode do not
@@ -191,7 +197,7 @@ which started at 769 ms and ended at 112 ms:
 - **Monitors are composed with row-wise `copy_from_slice`**, not `imageops::replace`,
   which walks pixel by pixel: 271 ms out of 408 on a two-screen machine.
 - **The panel is not hidden.** Windows is asked to exclude it from captures
-  (`SetWindowDisplayAffinity`). Hiding it meant waiting ~70 ms for the compositor to
+  (`SetWindowDisplayAffinity`). Hiding it meant waiting for the compositor to
   repaint — half of what remained — and made the panel blink on every shortcut.
 
 A detail that took two attempts: optimising only dependencies
