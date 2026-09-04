@@ -1,186 +1,233 @@
 # Anotador
 
-Panel flotante siempre por encima de las demás ventanas para apuntar lo que ves mal
-mientras miras el servidor de desarrollo, y volcarlo todo de una vez en el chat de
-un agente local.
+**An always-on-top notepad for reviewing your own UI — collect a batch of screenshots
+and notes, then paste all of them into a coding agent in one go.**
 
-## Cómo se usa
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
+![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB)
 
-1. `Ctrl` + `Alt` + `A` — la pantalla se congela, arrastras un rectángulo sobre lo
-   que está mal y escribes la nota ahí mismo. `Ctrl` + `Enter` la guarda y vuelves a
-   lo que estabas haciendo. `Esc` cancela.
-2. Repite tantas veces como haga falta. El panel solo lleva la cuenta.
-3. **Copiar todo** (o `Ctrl` + `Alt` + `C`) deja en el portapapeles un texto como este:
+*Léeme en [español](README.es.md). The application's interface is currently
+Spanish-only.*
 
-   ```
-   # Anotaciones (2) - 2026-09-03 12:40
+---
 
-   ## 1
-   El sidebar se solapa con el header por debajo de 900px.
-   Captura: C:\Users\Usuario\Anotador\capturas\20260903-1204\01.png
+## The problem it solves
 
-   ## 2
-   El botón de submit no muestra estado de carga.
-   Captura: C:\Users\Usuario\Anotador\capturas\20260903-1204\02.png
-   ```
+You are looking at your dev server and you spot something wrong. Then something else.
+Then a third thing. Describing each one to your coding agent as you find it breaks
+your flow; writing them down somewhere else means screenshots live in one place and
+words in another.
 
-4. Lo pegas en Claude Code, Codex u OpenCode y el agente abre las capturas solo.
+The obvious fix — "collect everything, then paste it" — runs into a hard limit:
+**the Windows clipboard holds exactly one item.** Either text, or one image. There is
+no way to paste eight notes and five screenshots in a single paste.
 
-Sobre la captura puedes **dibujar** antes de guardarla, con cuatro herramientas en la
-barra del compositor:
-
-| Herramienta | Para qué |
-| --- | --- |
-| ✎ Rotulador | Trazo libre |
-| ↗ Flecha | Señalar un control concreto |
-| ▭ Recuadro | Encerrar una zona |
-| ▒ Difuminar | Tapar claves, tokens o datos de clientes antes de compartir |
-
-Color y grosor se recuerdan entre capturas. `Ctrl` + `Z` deshace el último trazo. Todo
-se quema en el PNG, así que el agente ve exactamente lo que le has señalado.
-
-Si lo que falla es la **relación entre dos zonas alejadas**, no hace falta encuadrarlas:
-pulsa `Enter` (o «toda la pantalla» en el aviso de arriba) y anotas sobre la pantalla
-completa congelada.
-
-Cada captura guarda además el **título y el tamaño de la ventana** que tenías delante,
-que es la mitad de un informe de fallo y no hay que teclearla.
-
-El portapapeles de Windows solo admite **un** elemento — o texto, o una imagen — así
-que no hay forma de pegar varias capturas de una vez. Por eso el texto lleva las
-rutas: es lo único que cabe en una pegada y sigue dando al agente acceso a todas las
-imágenes. La primera vez el agente te pedirá permiso para leer fuera de su
-directorio de trabajo.
-
-Para notas sin captura, la caja del pie admite varias líneas: `Ctrl` + `Enter` o el
-botón `⏎` la añaden a la lista. Y `Ctrl` + `V` con una imagen en el portapapeles la
-convierte en una anotación, para capturas hechas con `Win` + `Shift` + `S` o que te
-haya mandado otra persona.
-
-## Ordenar, priorizar y copiar solo una parte
-
-- Arrastra una nota **por su número** para reordenarla: el orden en que ves las cosas
-  no es el orden en que quieres que se arreglen.
-- El chip de cada nota cicla su **prioridad**: normal → bloqueante → menor. La
-  prioridad viaja en el texto copiado, así que el agente sabe por dónde empezar.
-- Las **casillas** limitan la copia: con tres marcadas, el botón pasa a «Copiar 3».
-  Sin ninguna marcada copia todo.
-
-## Guardar, abrir y vaciar notas
-
-- **Guardar notas** escribe la lista completa en `guardadas\<sesión>.md`, deja las
-  capturas donde están y empieza una lista nueva. Nada se pierde.
-- El botón de la cabecera abre la lista de **notas guardadas**: pulsa una y vuelve
-  a cargarse en el panel, con sus capturas. Si la lista actual no está vacía se
-  guarda antes, previa confirmación, de modo que abrir nunca pisa nada.
-- **Vaciar** borra las notas y sus PNG. Pide confirmación.
-
-El `.md` *es* el formato de archivo: no hay un JSON paralelo que se pueda
-desincronizar, y una lista guardada se puede editar a mano en cualquier editor y seguirá
-abriéndose. Un test de ida y vuelta (`cargo test`) protege esa propiedad.
-
-## Ajustes
-
-Engranaje del panel: tema (oscuro / claro / según Windows), opacidad de la ventana,
-**plantilla de salida** y si el panel queda fuera de las capturas.
-
-Esa última merece explicación: activada (por defecto), Windows deja el panel fuera de
-**toda** captura de pantalla, no solo de las nuestras — también de OBS, Teams,
-`Win`+`Shift`+`S` y cualquier grabación. A cambio, la captura propia es unos 70 ms más
-rápida y el panel no parpadea. Desactívala si alguna vez necesitas que el panel salga
-en una grabación o una demo. El tamaño del panel se recuerda solo — lo estiras, y ahí se
-queda entre colapsos y entre ejecuciones. Todo vive en `settings.json`.
-
-La plantilla envuelve el texto copiado, porque Claude Code, Codex y OpenCode no
-responden igual al mismo preámbulo. `{{notas}}` es el listado, `{{total}}` y
-`{{fecha}}` son opcionales; si te dejas `{{notas}}` fuera, las notas se añaden al
-final en lugar de perderse.
-
-La plantilla **no** afecta a las notas guardadas: el archivo se escribe siempre en el
-formato canónico, o cambiarla dejaría ilegibles las notas ya guardadas.
-
-## Dónde se guarda todo
+Anotador's answer is to paste **text that carries the screenshots by absolute path**:
 
 ```
-C:\Users\<tú>\Anotador\
-  session.json              lista de anotaciones en curso (sobrevive a reinicios)
-  settings.json             ajustes
-  capturas\<sesión>\NN.png  los recortes
-  guardadas\<sesión>.md     listas archivadas con "Guardar notas"
+# Anotaciones (2) - 2026-09-03 12:40
+
+## 1 · bloqueante
+The sidebar overlaps the header below 900px.
+Contexto: Dashboard — MyApp — Chrome · 1280×900
+Captura: C:\Users\you\Anotador\capturas\20260903-1204\01.png
+
+## 2
+The submit button shows no loading state.
+Captura: C:\Users\you\Anotador\capturas\20260903-1204\02.png
 ```
 
-## Atajos
+That is the only shape that fits in one clipboard slot while still giving the agent
+access to every image. Paste it into **Claude Code**, **Codex** or **OpenCode** and the
+agent opens the screenshots itself.
 
-| Atajo | Qué hace |
-| --- | --- |
-| `Ctrl` + `Alt` + `A` | Capturar región y anotar |
-| `Ctrl` + `Alt` + `C` | Copiar todas las anotaciones |
-| `Ctrl` + `Enter` | Guardar la nota que estás escribiendo |
-| `Ctrl` + `V` | Pegar una imagen del portapapeles como anotación |
-| `Enter` | En el selector: anotar sobre la pantalla completa |
-| `Ctrl` + `Z` | Deshacer el último trazo |
-| `Esc` | Cancelar la captura |
+## Screenshot
 
-Si otro programa ya usa uno de los atajos globales, Anotador arranca igual y te lo
-avisa en el panel: pierdes el atajo, no la aplicación.
+> **TODO:** add `docs/screenshot.png`.
+>
+> Note the irony: by default Anotador asks Windows to keep its own panel out of every
+> screen capture, so you have to turn that setting off before you can photograph it.
 
-## Desarrollo
+## Install
+
+**Download** the latest `Anotador.exe` from the
+[Releases](https://github.com/YOUR-USERNAME/anotador/releases) page. It is a single
+self-contained executable — no installer, no runtime to add. Windows 10 (2004+) or 11.
+
+**Or build from source:**
 
 ```bash
 pnpm install
-pnpm tauri dev
+pnpm tauri build --no-bundle
 ```
 
-Para generar el instalador:
+The binary lands in `src-tauri/target/release/anotador.exe`. Requires
+[Rust](https://rustup.rs), [Node](https://nodejs.org) and the MSVC build tools.
+
+## How you use it
+
+1. Press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd>. The screen freezes; drag a
+   rectangle over what is wrong and type the note right there.
+   <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves it and you are back to what you were doing.
+2. Repeat as often as you need. The panel just keeps count.
+3. Hit **Copiar todo** (or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>) and paste into
+   your agent.
+
+### Drawing on a capture
+
+Four tools, in the composer's toolbar:
+
+| Tool | For |
+| --- | --- |
+| ✎ Marker | Freehand strokes |
+| ↗ Arrow | Pointing at one specific control |
+| ▭ Box | Enclosing an area |
+| ▒ Blur | Covering keys, tokens or customer data before sharing |
+
+Colour and width are remembered between captures. <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes
+the last stroke. Everything is burned into the PNG, so the agent sees exactly what you
+pointed at.
+
+If what is wrong is the **relationship between two distant places**, you do not have to
+frame them: press <kbd>Enter</kbd> and annotate the whole frozen screen.
+
+### Automatic context
+
+Every capture also records the **title and size of the window** you were looking at —
+half a UI bug report, without typing it.
+
+### Notes without a screenshot
+
+The footer box takes several lines; <kbd>Ctrl</kbd>+<kbd>Enter</kbd> or the `⏎` button
+adds it to the list. <kbd>Ctrl</kbd>+<kbd>V</kbd> with an image on the clipboard turns
+it into a note, for shots taken with <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> or
+sent to you by someone else.
+
+### Ordering, priority, partial copy
+
+- Drag a note **by its number** to reorder it: the order you spot things in is not the
+  order you want them fixed in.
+- Each note's chip cycles its **priority**: normal → blocking → minor. Priority travels
+  in the copied text, so the agent knows where to start.
+- **Checkboxes** narrow the copy: tick three and the button becomes "Copiar 3". Tick
+  none and it copies everything.
+
+### Saving, reopening and clearing
+
+- **Guardar notas** writes the whole list to `guardadas\<session>.md`, leaves the
+  screenshots where they are and starts a fresh list. Nothing is lost.
+- The header button opens the list of **saved notes**: click one and it loads back into
+  the panel with its screenshots. If the current list is not empty it is saved first,
+  after confirmation, so opening can never overwrite anything.
+- **Vaciar** deletes the notes and their PNGs. Asks first.
+
+The `.md` **is** the archive format — there is no parallel JSON to drift out of sync,
+and a saved list can be hand-edited in any editor and will still reopen. A round-trip
+test (`cargo test`) protects that property.
+
+## Settings
+
+The panel's gear: theme (dark / light / follow Windows), window opacity, the **output
+template**, and whether the panel stays out of screen captures.
+
+That last one deserves a note. Enabled (the default), Windows keeps the panel out of
+**every** screen capture, not only Anotador's — that includes OBS, Teams,
+<kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> and any recording. In exchange, Anotador's
+own capture is ~70 ms faster and the panel does not blink. Turn it off if you ever need
+the panel to appear in a recording or a demo.
+
+The **template** wraps the copied text, because Claude Code, Codex and OpenCode do not
+respond alike to the same preamble. `{{notas}}` is the list; `{{total}}` and `{{fecha}}`
+are optional. Leave `{{notas}}` out and the notes are appended rather than lost.
+
+The template does **not** affect saved notes: the archive is always written in the
+canonical format, or changing it would make already-saved notes unreadable.
+
+The panel's size remembers itself — stretch it and it stays that way, across collapses
+and across runs. All of it lives in `settings.json`.
+
+## Where everything is stored
+
+```
+%USERPROFILE%\Anotador\
+  session.json               the list in progress (survives restarts)
+  settings.json              settings
+  capturas\<session>\NN.png  the crops
+  guardadas\<session>.md     lists archived with "Guardar notas"
+```
+
+## Shortcuts
+
+| Shortcut | Does |
+| --- | --- |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> | Capture a region and annotate |
+| <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd> | Copy every note |
+| <kbd>Ctrl</kbd>+<kbd>Enter</kbd> | Save the note being written |
+| <kbd>Ctrl</kbd>+<kbd>V</kbd> | Paste a clipboard image as a note |
+| <kbd>Enter</kbd> | In the selector: annotate the whole screen |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Undo the last stroke |
+| <kbd>Esc</kbd> | Cancel the capture |
+
+If another program already owns one of the global shortcuts, Anotador starts anyway and
+tells you in the panel: you lose the shortcut, not the application.
+
+## How it works
+
+The region selector does not draw over a transparent window. It first captures **every**
+monitor with [`xcap`](https://crates.io/crates/xcap) and composes them into one image
+laid out like the virtual desktop (`src-tauri/src/capture.rs`); that frozen image is the
+selector's background. So the screen cannot change while you drag, a selection can cross
+two monitors, and there is no fight with Windows transparency and click-through.
+
+Four decisions carry the latency between pressing the shortcut and seeing the selector,
+which started at 769 ms and ended at 112 ms:
+
+- **The capture never touches disk.** It lives in memory and reaches the webview through
+  a custom URI scheme as an uncompressed **BMP**, which is close to a memory copy.
+  Compressing a PNG of the whole desktop and reading it back cost hundreds of ms.
+- **The selector window is built once** at startup and reused hidden. Creating a webview
+  per capture cost the other half of the delay.
+- **Monitors are composed with row-wise `copy_from_slice`**, not `imageops::replace`,
+  which walks pixel by pixel: 271 ms out of 408 on a two-screen machine.
+- **The panel is not hidden.** Windows is asked to exclude it from captures
+  (`SetWindowDisplayAffinity`). Hiding it meant waiting ~70 ms for the compositor to
+  repaint — half of what remained — and made the panel blink on every shortcut.
+
+A detail that took two attempts: optimising only dependencies
+(`profile.dev.package."*"`) was not enough, because the compositing loop lives in *this*
+crate. With `profile.dev` optimised too, composing two monitors went from 133 ms to 1 ms.
+
+The selection travels to the backend as **fractions** of the image (0..1) rather than
+pixels, so display scaling never enters the crop arithmetic.
+
+Blur does not paint opaque pixels on top: it redraws the screenshot over itself through
+a CSS filter, clipping the result to the rectangle. Without that clip the filter would
+sample past the edge and leave a soft halo instead of a clean-edged patch.
+
+## Known limitations
+
+- With two monitors at **different DPI scalings**, the virtual-desktop composition can
+  end up misaligned. With uniform scaling it works fine.
+- The stored context is the window **title** and its size, **not the URL**. Getting the
+  address out of a browser requires walking its accessibility tree with UI Automation
+  looking for the address bar: browser specific, and it fails silently when it drifts.
+  The title plus the size is what can be had reliably.
+- The interface is **Spanish only** for now.
+
+## Development
 
 ```bash
-pnpm tauri build
+pnpm install
+pnpm tauri dev      # run with hot reload
+cargo test          # from src-tauri/
 ```
 
-## Cómo está montado
+Note that the dev instance holds the global shortcuts, so close any release build of
+Anotador first or they will collide.
 
-El selector de región no dibuja sobre una ventana transparente: primero captura
-**todos** los monitores con `xcap` y los compone en una sola imagen con la
-disposición del escritorio virtual (`src-tauri/src/capture.rs`), y esa imagen
-congelada es el fondo de la ventana de selección. Así la pantalla no puede cambiar
-mientras arrastras, una selección puede cruzar dos monitores, y no hay que pelearse
-con la transparencia y el click-through de Windows.
+Issues and pull requests are welcome.
 
-Cuatro decisiones sostienen la latencia entre pulsar el atajo y ver el selector
-(769 ms al principio, 145 ms tras las tres primeras):
+## License
 
-- La captura **no pasa por disco**. Vive en memoria y llega al webview por un
-  esquema URI propio (`frozen://`) como **BMP**, que es prácticamente una copia de
-  memoria. Comprimir un PNG del escritorio entero y volver a leerlo costaba cientos
-  de milisegundos.
-- La ventana de selección se **construye una sola vez** al arrancar y se reutiliza
-  oculta. Crear un webview por captura costaba la otra mitad del retardo.
-- Solo el recorte final se escribe a disco, ya como PNG.
-- El panel **no se oculta**: se le pide a Windows que lo excluya de las capturas
-  (`SetWindowDisplayAffinity`). Ocultarlo obligaba a esperar ~70 ms a que el
-  compositor repintase — la mitad de lo que quedaba — y hacía parpadear el panel en
-  cada atajo. Si la API falla, o si desactivas la opción, se vuelve al camino de
-  ocultar y esperar.
-
-Un detalle que costó dos intentos: optimizar solo las dependencias (`profile.dev.package."*"`)
-no bastaba, porque el bucle de composición vive en *este* crate. Con `profile.dev`
-también optimizado, componer dos monitores pasó de 133 ms a 1 ms.
-
-La selección viaja al backend como **fracciones** de la imagen (0..1), no como
-píxeles, de modo que el escalado de pantalla nunca entra en la aritmética del
-recorte.
-
-El difuminado no pinta píxeles opacos encima: vuelve a dibujar la propia captura
-sobre sí misma a través de un filtro CSS, recortando el resultado al rectángulo. Sin
-ese recorte el filtro muestrearía más allá del borde y dejaría un halo suave en vez
-de un parche de bordes limpios.
-
-## Limitaciones conocidas
-
-- Con dos monitores a **escalados de DPI distintos**, la composición del escritorio
-  virtual puede desalinearse. Con escalado uniforme funciona bien.
-- El contexto que se guarda es el **título** de la ventana y su tamaño, **no la URL**.
-  Sacar la dirección de un navegador exige recorrer su árbol de accesibilidad con UI
-  Automation buscando la barra de direcciones: depende del navegador y falla en
-  silencio cuando cambia. El título más el tamaño es lo que se puede obtener de forma
-  fiable.
+[MIT](LICENSE).

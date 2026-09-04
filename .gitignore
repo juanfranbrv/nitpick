@@ -7,3 +7,4 @@ src-tauri/gen/
 # are reproducible and do not belong in the repo.
 .agents/skills/
 .claude/skills/
+skills-lock.json
