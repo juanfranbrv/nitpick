@@ -44,10 +44,10 @@ agent opens the screenshots itself.
 
 ## Screenshot
 
-> **TODO:** add `docs/screenshot.png`.
->
-> Note the irony: by default Anotador asks Windows to keep its own panel out of every
-> screen capture, so you have to turn that setting off before you can photograph it.
+![The panel mid-review, with five notes collected](docs/screenshot.png)
+
+*A review in progress. Each note keeps its own crop, the window it came from, and a
+priority the agent can read.*
 
 ## Install
 

@@ -173,6 +173,9 @@ button:hover { background: color-mix(in srgb, var(--fg) 9%, transparent); color:
 
 .note {
   display: flex;
+  /* Without this the row stretches every child to its full height, which left
+     the tick box floating halfway down beside a two-line note. */
+  align-items: flex-start;
   gap: 9px;
   padding: 8px;
   background: var(--bg-2);

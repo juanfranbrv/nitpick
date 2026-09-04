@@ -193,12 +193,7 @@ function render() {
       text.rows = 1;
       text.value = note.text;
       text.placeholder = "(sin texto)";
-      // Grow to fit so nothing hides behind a scrollbar.
-      const autosize = () => {
-        text.style.height = "auto";
-        text.style.height = `${text.scrollHeight}px`;
-      };
-      text.addEventListener("input", autosize);
+      text.addEventListener("input", () => autosize(text));
       text.addEventListener("change", () => updateNote(note.id, text.value));
       text.addEventListener("blur", () => updateNote(note.id, text.value));
       body.append(text);
@@ -211,7 +206,6 @@ function render() {
         body.append(ctx);
       }
       li.append(body);
-      queueMicrotask(autosize);
 
       const prio = document.createElement("button");
       prio.className = "note-prio";
@@ -239,6 +233,21 @@ function render() {
       return li;
     }),
   );
+
+  // Measured only once the rows are laid out. Sizing a textarea in a
+  // microtask read a scrollHeight from before the thumbnail and the priority
+  // chip had taken their width, so every note came out several lines too tall.
+  requestAnimationFrame(() => {
+    for (const text of notesList.querySelectorAll<HTMLTextAreaElement>(".note-text")) {
+      autosize(text);
+    }
+  });
+}
+
+/** Grow a note's box to fit its text, so nothing hides behind a scrollbar. */
+function autosize(text: HTMLTextAreaElement) {
+  text.style.height = "auto";
+  text.style.height = `${text.scrollHeight}px`;
 }
 
 // -------------------------------------------------------------- drag to order

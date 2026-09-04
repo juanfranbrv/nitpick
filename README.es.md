@@ -42,10 +42,10 @@ capturas solo.
 
 ## Captura de pantalla
 
-> **PENDIENTE:** añadir `docs/screenshot.png`.
->
-> Nótese la ironía: por defecto el Anotador le pide a Windows que deje su propio panel
-> fuera de toda captura, así que hay que desactivar esa opción para poder fotografiarlo.
+![El panel a media revisión, con cinco notas recogidas](docs/screenshot.png)
+
+*Una revisión en curso. Cada nota conserva su recorte, la ventana de la que salió y una
+prioridad que el agente puede leer.*
 
 ## Instalación
 
