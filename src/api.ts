@@ -82,6 +82,7 @@ export const commitCapture = (sel: Selection, text: string, strokes: string | nu
 export const cancelCapture = () => invoke<void>("cancel_capture");
 export const currentCapture = () => invoke<CaptureReady | null>("current_capture");
 export const openBaseDir = () => invoke<void>("open_base_dir");
+export const quitApp = () => invoke<void>("quit");
 export const startupWarnings = () => invoke<string[]>("startup_warnings");
 export const getSettings = () => invoke<Settings>("get_settings");
 export const putSettings = (settings: Settings) => invoke<Settings>("put_settings", { settings });

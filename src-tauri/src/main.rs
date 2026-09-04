@@ -789,6 +789,13 @@ fn put_settings(app: AppHandle, settings: Settings) -> Settings {
     saved
 }
 
+/// Notes live in session.json, so quitting loses nothing and needs no
+/// confirmation.
+#[tauri::command]
+fn quit(app: AppHandle) {
+    app.exit(0);
+}
+
 #[tauri::command]
 fn open_base_dir(store: State<Store>) -> Result<(), String> {
     let _ = std::fs::create_dir_all(&store.base);
@@ -903,6 +910,7 @@ fn main() {
             get_settings,
             put_settings,
             open_base_dir,
+            quit,
         ])
         .run(tauri::generate_context!())
         .expect("error al arrancar Anotador");

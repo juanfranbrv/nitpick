@@ -6,7 +6,7 @@ import { openPath } from "@tauri-apps/plugin-opener";
 import {
   addClipboardNote, addTextNote, applyTheme, archiveNotes, beginCapture, buildMarkdown,
   clearNotes, DEFAULT_TEMPLATE, deleteNote, getSettings, listArchives, listNotes,
-  openArchive, openBaseDir, PRIORITIES, putSettings, reorderNotes, setPriority,
+  openArchive, openBaseDir, PRIORITIES, putSettings, quitApp, reorderNotes, setPriority,
   startupWarnings, updateNote, type Note, type Settings,
 } from "./api";
 
@@ -174,13 +174,7 @@ function render() {
       idx.className = "note-idx";
       idx.textContent = String(i + 1);
       idx.title = "Arrastra para reordenar";
-      // The row becomes draggable only while the handle is held, so selecting
-      // text inside the note still works.
-      idx.addEventListener("mousedown", () => (li.draggable = true));
-      li.addEventListener("dragend", () => {
-        li.draggable = false;
-        clearDropMarks();
-      });
+      idx.addEventListener("mousedown", (e) => startDrag(e, note.id, li));
       li.append(idx);
 
       if (note.image) {
@@ -249,56 +243,88 @@ function render() {
 
 // -------------------------------------------------------------- drag to order
 
-/** The order you spot things is not the order you want them fixed in. */
-let dragId: string | null = null;
+/**
+ * Reordering runs on plain mouse events, not HTML5 drag and drop.
+ *
+ * The webview registers an OS-level drop target so it can accept dropped
+ * files, and that swallows drags started inside the page — dragstart fires and
+ * nothing else follows. Mouse events sidestep the whole mechanism, and give a
+ * drop indicator that tracks the pointer instead of a ghost image.
+ *
+ * The order you spot things in is not the order you want them fixed in.
+ */
+let drag: { id: string; row: HTMLLIElement } | null = null;
+let dropAt: { id: string; above: boolean } | null = null;
+let autoScroll = 0;
 
 function clearDropMarks() {
-  for (const li of notesList.children) {
-    li.classList.remove("drop-above", "drop-below", "dragging");
+  for (const row of notesList.children) {
+    row.classList.remove("drop-above", "drop-below", "dragging");
   }
 }
 
-notesList.addEventListener("dragstart", (e) => {
-  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
-  if (!li) return;
-  dragId = li.dataset.id ?? null;
-  li.classList.add("dragging");
-  if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
-});
-
-notesList.addEventListener("dragover", (e) => {
-  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
-  if (!li || !dragId || li.dataset.id === dragId) return;
+function startDrag(e: MouseEvent, id: string, row: HTMLLIElement) {
+  if (e.button !== 0) return;
+  // Stop the handle's own text from being selected as the pointer moves.
   e.preventDefault();
-  const box = li.getBoundingClientRect();
-  const above = e.clientY < box.top + box.height / 2;
-  li.classList.toggle("drop-above", above);
-  li.classList.toggle("drop-below", !above);
-});
+  drag = { id, row };
+  dropAt = null;
+  row.classList.add("dragging");
+  document.addEventListener("mousemove", onDragMove);
+  document.addEventListener("mouseup", endDrag, { once: true });
+}
 
-notesList.addEventListener("dragleave", (e) => {
-  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
-  li?.classList.remove("drop-above", "drop-below");
-});
+function onDragMove(e: MouseEvent) {
+  if (!drag) return;
+  const rows = [...notesList.children] as HTMLLIElement[];
 
-notesList.addEventListener("drop", async (e) => {
-  const li = (e.target as HTMLElement).closest<HTMLLIElement>("li.note");
-  const targetId = li?.dataset.id;
-  if (!li || !dragId || !targetId || targetId === dragId) return;
-  e.preventDefault();
+  // A long list has to scroll while you drag, or the far end is unreachable.
+  const list = notesList.getBoundingClientRect();
+  const edge = 28;
+  if (e.clientY < list.top + edge) autoScroll = -8;
+  else if (e.clientY > list.bottom - edge) autoScroll = 8;
+  else autoScroll = 0;
+  if (autoScroll) notesList.scrollTop += autoScroll;
 
-  const box = li.getBoundingClientRect();
-  const above = e.clientY < box.top + box.height / 2;
+  dropAt = null;
+  for (const row of rows) {
+    const box = row.getBoundingClientRect();
+    if (e.clientY < box.bottom) {
+      dropAt = { id: row.dataset.id!, above: e.clientY < box.top + box.height / 2 };
+      break;
+    }
+  }
+  // Past the last row means "put it at the end".
+  if (!dropAt && rows.length) {
+    dropAt = { id: rows[rows.length - 1].dataset.id!, above: false };
+  }
 
-  const ids = notes.map((n) => n.id).filter((id) => id !== dragId);
-  const at = ids.indexOf(targetId);
-  ids.splice(above ? at : at + 1, 0, dragId);
-
-  dragId = null;
   clearDropMarks();
+  drag.row.classList.add("dragging");
+  if (dropAt && dropAt.id !== drag.id) {
+    const target = rows.find((r) => r.dataset.id === dropAt!.id);
+    target?.classList.add(dropAt.above ? "drop-above" : "drop-below");
+  }
+}
+
+async function endDrag() {
+  document.removeEventListener("mousemove", onDragMove);
+  const moved = drag;
+  const target = dropAt;
+  drag = null;
+  dropAt = null;
+  autoScroll = 0;
+  clearDropMarks();
+  if (!moved || !target || target.id === moved.id) return;
+
+  const ids = notes.map((n) => n.id).filter((id) => id !== moved.id);
+  const at = ids.indexOf(target.id);
+  if (at < 0) return;
+  ids.splice(target.above ? at : at + 1, 0, moved.id);
+
   notes = await reorderNotes(ids);
   render();
-});
+}
 
 async function setCollapsed(next: boolean) {
   collapsed = next;
@@ -321,6 +347,8 @@ el("btn-collapse").addEventListener("click", () => setCollapsed(true));
 el("btn-expand").addEventListener("click", () => setCollapsed(false));
 el("btn-shot").addEventListener("click", () => beginCapture());
 el("btn-folder").addEventListener("click", () => openBaseDir());
+// Nothing is lost on exit: the list is already on disk.
+el("btn-quit").addEventListener("click", () => quitApp());
 /** Reopening a saved list is the other half of saving one; without it the .md
  *  files would be a dead end. */
 async function showArchives() {

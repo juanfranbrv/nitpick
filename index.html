@@ -10,7 +10,7 @@
       <span class="pill-dot"></span>
       <span class="pill-count" id="pill-count">0</span>
       <span class="pill-label">anotaciones</span>
-      <button class="pill-expand" id="btn-expand" title="Abrir panel">⌃</button>
+      <button class="pill-expand" id="btn-expand" title="Abrir panel"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 9.7 8 6.1l3.6 3.6"/></svg></button>
     </div>
 
     <div id="panel" class="card">
@@ -18,12 +18,13 @@
         <span class="grip" data-tauri-drag-region></span>
         <h1 data-tauri-drag-region>Anotador</h1>
         <span class="count" id="count">0</span>
-        <button id="btn-shot" title="Capturar región (Ctrl+Alt+A)">✂</button>
-        <button id="btn-paste" title="Pegar imagen del portapapeles (Ctrl+V)">📋</button>
-        <button id="btn-archives" title="Notas guardadas">🗂</button>
-        <button id="btn-folder" title="Abrir carpeta de capturas">📁</button>
-        <button id="btn-settings" title="Ajustes">⚙</button>
-        <button id="btn-collapse" title="Colapsar">–</button>
+        <button id="btn-shot" title="Capturar región (Ctrl+Alt+A)"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4.3" cy="12" r="1.9"/><circle cx="11.7" cy="12" r="1.9"/><path d="M11.1 2.6 5.5 10.6M4.9 2.6l5.6 8"/></svg></button>
+        <button id="btn-paste" title="Pegar imagen del portapapeles (Ctrl+V)"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H4.9A.9.9 0 0 0 4 3.9v9.2a.9.9 0 0 0 .9.9h6.2a.9.9 0 0 0 .9-.9V3.9A.9.9 0 0 0 11.1 3H10"/><rect x="6" y="1.8" width="4" height="2.4" rx=".7"/></svg></button>
+        <button id="btn-archives" title="Notas guardadas"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.2" y="2.8" width="11.6" height="3" rx=".8"/><path d="M3.2 5.8v6.5a.9.9 0 0 0 .9.9h7.8a.9.9 0 0 0 .9-.9V5.8"/><path d="M6.6 8.6h2.8"/></svg></button>
+        <button id="btn-folder" title="Abrir carpeta de capturas"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 12.4V4.3a.9.9 0 0 1 .9-.9h2.7l1.3 1.7h5.8a.9.9 0 0 1 .9.9v6.4a.9.9 0 0 1-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></svg></button>
+        <button id="btn-settings" title="Ajustes"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 5.2h10.8M2.6 10.8h10.8"/><circle cx="6" cy="5.2" r="1.7"/><circle cx="10.4" cy="10.8" r="1.7"/></svg></button>
+        <button id="btn-collapse" title="Colapsar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 6.3 8 9.9l3.6-3.6"/></svg></button>
+        <button id="btn-quit" class="quit" title="Cerrar Anotador"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8"/></svg></button>
       </header>
 
       <ul class="notes" id="notes"></ul>
@@ -48,9 +49,9 @@
 
       <section class="sheet" id="archives" hidden>
         <header class="card-head">
-          <button id="btn-archives-back" title="Volver">‹</button>
+          <button id="btn-archives-back" title="Volver"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.9 3.8 5.9 8l4 4.2"/></svg></button>
           <h1>Notas guardadas</h1>
-          <button id="btn-archives-folder" title="Abrir la carpeta">📁</button>
+          <button id="btn-archives-folder" title="Abrir la carpeta"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 12.4V4.3a.9.9 0 0 1 .9-.9h2.7l1.3 1.7h5.8a.9.9 0 0 1 .9.9v6.4a.9.9 0 0 1-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></svg></button>
         </header>
         <ul class="archive-list" id="archive-list"></ul>
         <div class="empty" id="archives-empty" hidden>
@@ -61,7 +62,7 @@
 
       <section class="sheet settings" id="settings" hidden>
         <header class="card-head">
-          <button id="btn-settings-back" title="Volver">‹</button>
+          <button id="btn-settings-back" title="Volver"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.9 3.8 5.9 8l4 4.2"/></svg></button>
           <h1>Ajustes</h1>
         </header>
         <div class="settings-body">
