@@ -9,9 +9,6 @@ and notes, then paste all of them into a coding agent in one go.**
 ![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)
 ![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-24C8DB)
 
-*Léeme en [español](README.es.md). The application's interface is currently
-Spanish-only.*
-
 ---
 
 ## The problem it solves
@@ -28,16 +25,16 @@ no way to paste eight notes and five screenshots in a single paste.
 Nitpick's answer is to paste **text that carries the screenshots by absolute path**:
 
 ```
-# Anotaciones (2) - 2026-09-03 12:40
+# Notes (2) - 2026-09-04 09:15
 
-## 1 · bloqueante
+## 1 · blocking
 The sidebar overlaps the header below 900px.
-Contexto: Dashboard — MyApp — Chrome · 1280×900
-Captura: C:\Users\you\Nitpick\capturas\20260903-1204\01.png
+Context: Acme - Dashboard - Google Chrome · 1280×900
+Screenshot: C:\Users\you\Nitpick\captures\20260904-0915\01.png
 
 ## 2
 The submit button shows no loading state.
-Captura: C:\Users\you\Nitpick\capturas\20260903-1204\02.png
+Screenshot: C:\Users\you\Nitpick\captures\20260904-0915\02.png
 ```
 
 That is the only shape that fits in one clipboard slot while still giving the agent
@@ -79,7 +76,7 @@ The binary lands in `src-tauri/target/release/nitpick.exe`. Requires
    rectangle over what is wrong and type the note right there.
    <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves it and you are back to what you were doing.
 2. Repeat as often as you need. The panel just keeps count.
-3. Hit **Copiar todo** (or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>) and paste into
+3. Hit **Copy all** (or <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd>) and paste into
    your agent.
 
 ### Drawing on a capture
@@ -118,17 +115,17 @@ sent to you by someone else.
   order you want them fixed in.
 - Each note's chip cycles its **priority**: normal → blocking → minor. Priority travels
   in the copied text, so the agent knows where to start.
-- **Checkboxes** narrow the copy: tick three and the button becomes "Copiar 3". Tick
+- **Checkboxes** narrow the copy: tick three and the button becomes "Copy 3". Tick
   none and it copies everything.
 
 ### Saving, reopening and clearing
 
-- **Guardar notas** writes the whole list to `guardadas\<session>.md`, leaves the
+- **Save notes** writes the whole list to `saved\<session>.md`, leaves the
   screenshots where they are and starts a fresh list. Nothing is lost.
 - The header button opens the list of **saved notes**: click one and it loads back into
   the panel with its screenshots. If the current list is not empty it is saved first,
   after confirmation, so opening can never overwrite anything.
-- **Vaciar** deletes the notes and their PNGs. Asks first.
+- **Clear** deletes the notes and their PNGs. Asks first.
 
 The `.md` **is** the archive format — there is no parallel JSON to drift out of sync,
 and a saved list can be hand-edited in any editor and will still reopen. A round-trip
@@ -146,8 +143,8 @@ own capture is ~250 ms faster and the panel does not blink. Turn it off if you e
 the panel to appear in a recording or a demo.
 
 The **template** wraps the copied text, because Claude Code, Codex and OpenCode do not
-respond alike to the same preamble. `{{notas}}` is the list; `{{total}}` and `{{fecha}}`
-are optional. Leave `{{notas}}` out and the notes are appended rather than lost.
+respond alike to the same preamble. `{{notes}}` is the list; `{{total}}` and `{{date}}`
+are optional. Leave `{{notes}}` out and the notes are appended rather than lost.
 
 The template does **not** affect saved notes: the archive is always written in the
 canonical format, or changing it would make already-saved notes unreadable.
@@ -161,8 +158,8 @@ and across runs. All of it lives in `settings.json`.
 %USERPROFILE%\Nitpick\
   session.json               the list in progress (survives restarts)
   settings.json              settings
-  capturas\<session>\NN.png  the crops
-  guardadas\<session>.md     lists archived with "Guardar notas"
+  captures\<session>\NN.png  the crops
+  saved\<session>.md         lists filed away with "Save notes"
 ```
 
 ## Shortcuts
@@ -221,7 +218,6 @@ sample past the edge and leave a soft halo instead of a clean-edged patch.
   address out of a browser requires walking its accessibility tree with UI Automation
   looking for the address bar: browser specific, and it fails silently when it drifts.
   The title plus the size is what can be had reliably.
-- The interface is **Spanish only** for now.
 
 ## Development
 

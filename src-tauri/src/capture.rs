@@ -28,15 +28,15 @@ impl Frozen {
 pub fn freeze() -> Result<Frozen, String> {
     let start = Instant::now();
     let monitors =
-        Monitor::all().map_err(|e| format!("no se pudieron enumerar los monitores: {e}"))?;
+        Monitor::all().map_err(|e| format!("could not enumerate monitors: {e}"))?;
     let enumerated = start.elapsed();
 
     let mut shots = Vec::with_capacity(monitors.len());
     for m in &monitors {
         // Each getter is its own Windows call, so ask once and reuse.
-        let x = m.x().map_err(|e| format!("posición X del monitor: {e}"))?;
-        let y = m.y().map_err(|e| format!("posición Y del monitor: {e}"))?;
-        let img = m.capture_image().map_err(|e| format!("captura del monitor: {e}"))?;
+        let x = m.x().map_err(|e| format!("monitor X position: {e}"))?;
+        let y = m.y().map_err(|e| format!("monitor Y position: {e}"))?;
+        let img = m.capture_image().map_err(|e| format!("monitor capture: {e}"))?;
         shots.push((x, y, img));
     }
     let grabbed = start.elapsed();
@@ -50,7 +50,7 @@ pub fn freeze() -> Result<Frozen, String> {
         let (origin_x, origin_y, image) = shots.pop().unwrap();
         Frozen { image, origin_x, origin_y }
     } else if screens == 0 {
-        return Err("no se detectó ningún monitor".into());
+        return Err("no monitor detected".into());
     } else {
         let min_x = shots.iter().map(|(x, _, _)| *x).min().unwrap();
         let min_y = shots.iter().map(|(_, y, _)| *y).min().unwrap();
@@ -71,8 +71,8 @@ pub fn freeze() -> Result<Frozen, String> {
     };
 
     eprintln!(
-        "  freeze: {screens} monitor(es), enumerar {} ms, capturar {} ms, \
-         reservar {} ms, copiar {} ms",
+        "  freeze: {screens} monitor(s), enumerate {} ms, grab {} ms, \
+         allocate {} ms, copy {} ms",
         enumerated.as_millis(),
         (grabbed - enumerated).as_millis(),
         (allocated - grabbed).as_millis(),
@@ -123,11 +123,11 @@ mod tests {
         blit(&mut canvas, &patch, 2, 1);
 
         for (x, y) in [(2, 1), (3, 1), (2, 2), (3, 2)] {
-            assert_eq!(*canvas.get_pixel(x, y), Rgba([10, 20, 30, 255]), "en {x},{y}");
+            assert_eq!(*canvas.get_pixel(x, y), Rgba([10, 20, 30, 255]), "at {x},{y}");
         }
         // Everything outside the patch is untouched.
         for (x, y) in [(0, 0), (1, 0), (2, 0), (3, 0), (0, 1), (1, 1), (0, 2), (1, 2)] {
-            assert_eq!(*canvas.get_pixel(x, y), Rgba([0, 0, 0, 255]), "en {x},{y}");
+            assert_eq!(*canvas.get_pixel(x, y), Rgba([0, 0, 0, 255]), "at {x},{y}");
         }
     }
 
@@ -150,7 +150,7 @@ pub fn to_bmp(image: &RgbaImage) -> Result<Vec<u8>, String> {
     let mut out = Vec::with_capacity(image.as_raw().len() + 128);
     BmpEncoder::new(&mut Cursor::new(&mut out))
         .encode(image.as_raw(), image.width(), image.height(), ExtendedColorType::Rgba8)
-        .map_err(|e| format!("no se pudo codificar la captura: {e}"))?;
+        .map_err(|e| format!("could not encode the capture: {e}"))?;
     Ok(out)
 }
 
@@ -173,7 +173,7 @@ pub fn crop_to_png(
 
     if let Some(bytes) = strokes {
         let layer = xcap::image::load_from_memory(bytes)
-            .map_err(|e| format!("no se pudieron leer los trazos: {e}"))?
+            .map_err(|e| format!("could not read the strokes: {e}"))?
             .to_rgba8();
         imageops::overlay(&mut cut, &layer, 0, 0);
     }
@@ -181,5 +181,5 @@ pub fn crop_to_png(
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    cut.save(dest).map_err(|e| format!("no se pudo guardar el recorte: {e}"))
+    cut.save(dest).map_err(|e| format!("could not save the crop: {e}"))
 }

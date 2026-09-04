@@ -67,7 +67,7 @@ function ask(opts: {
 }): Promise<boolean> {
   el("modal-title").textContent = opts.title;
   el("modal-body").textContent = opts.body;
-  modalOk.textContent = opts.confirm ?? "Aceptar";
+  modalOk.textContent = opts.confirm ?? "OK";
   modalOk.classList.toggle("danger", opts.danger === true);
   modal.hidden = false;
 
@@ -150,7 +150,7 @@ function render() {
   // Notes can be deleted while ticked; never let a stale id reach the copy.
   const live = new Set(notes.map((n) => n.id));
   for (const id of [...picked]) if (!live.has(id)) picked.delete(id);
-  btnCopy.textContent = picked.size ? `Copiar ${picked.size}` : "Copiar todo";
+  btnCopy.textContent = picked.size ? `Copy ${picked.size}` : "Copy all";
 
   notesList.replaceChildren(
     ...notes.map((note, i) => {
@@ -162,18 +162,18 @@ function render() {
       pick.type = "checkbox";
       pick.className = "note-pick";
       pick.checked = picked.has(note.id);
-      pick.title = "Incluir solo esta en la copia";
+      pick.title = "Copy only the ticked notes";
       pick.addEventListener("change", () => {
         if (pick.checked) picked.add(note.id);
         else picked.delete(note.id);
-        btnCopy.textContent = picked.size ? `Copiar ${picked.size}` : "Copiar todo";
+        btnCopy.textContent = picked.size ? `Copy ${picked.size}` : "Copy all";
       });
       li.append(pick);
 
       const idx = document.createElement("span");
       idx.className = "note-idx";
       idx.textContent = String(i + 1);
-      idx.title = "Arrastra para reordenar";
+      idx.title = "Drag to reorder";
       idx.addEventListener("mousedown", (e) => startDrag(e, note.id, li));
       li.append(idx);
 
@@ -181,7 +181,7 @@ function render() {
         const img = document.createElement("img");
         img.className = "note-thumb";
         img.src = convertFileSrc(note.image);
-        img.title = "Abrir la captura";
+        img.title = "Open the screenshot";
         img.addEventListener("click", () => openPath(note.image!));
         li.append(img);
       }
@@ -192,7 +192,7 @@ function render() {
       text.className = "note-text";
       text.rows = 1;
       text.value = note.text;
-      text.placeholder = "(sin texto)";
+      text.placeholder = "(no text)";
       text.addEventListener("input", () => autosize(text));
       text.addEventListener("change", () => updateNote(note.id, text.value));
       text.addEventListener("blur", () => updateNote(note.id, text.value));
@@ -211,7 +211,7 @@ function render() {
       prio.className = "note-prio";
       prio.dataset.priority = note.priority;
       prio.textContent = PRIORITIES.find((p) => p.key === note.priority)?.label ?? "normal";
-      prio.title = "Cambiar prioridad";
+      prio.title = "Change priority";
       prio.addEventListener("click", async () => {
         const at = PRIORITIES.findIndex((p) => p.key === note.priority);
         const next = PRIORITIES[(at + 1) % PRIORITIES.length].key;
@@ -223,7 +223,7 @@ function render() {
       const del = document.createElement("button");
       del.className = "note-del";
       del.textContent = "✕";
-      del.title = "Borrar anotación";
+      del.title = "Delete note";
       del.addEventListener("click", async () => {
         notes = await deleteNote(note.id);
         render();
@@ -367,7 +367,7 @@ async function showArchives() {
     ...saved.map((a) => {
       const li = document.createElement("li");
       li.className = "archive";
-      li.title = "Abrir estas notas";
+      li.title = "Open these notes";
 
       const main = document.createElement("div");
       main.className = "archive-main";
@@ -395,9 +395,9 @@ async function showArchives() {
 async function openBatch(id: string) {
   if (notes.length) {
     const ok = await ask({
-      title: "Abrir otras notas",
-      body: `Se guardarán antes las ${notes.length} notas de la lista actual, con sus capturas. No se pierde nada.`,
-      confirm: "Guardar y abrir",
+      title: "Open another list",
+      body: `The ${notes.length} notes in the current list are saved first, screenshots included. Nothing is lost.`,
+      confirm: "Save and open",
     });
     if (!ok) return;
     await archiveNotes();
@@ -406,7 +406,7 @@ async function openBatch(id: string) {
     notes = await openArchive(id);
     render();
     archives.hidden = true;
-    toast(`${notes.length} notas cargadas`);
+    toast(`${notes.length} notes loaded`);
   } catch (e) {
     toast(String(e));
   }
@@ -432,7 +432,7 @@ el("btn-copy").addEventListener("click", async () => {
   const ids = picked.size ? [...picked] : null;
   await writeText(await buildMarkdown(ids));
   const n = ids ? ids.length : notes.length;
-  toast(`${n} ${n === 1 ? "anotación copiada" : "anotaciones copiadas"}`);
+  toast(`${n} ${n === 1 ? "note copied" : "notes copied"}`);
 });
 
 async function pasteImage() {
@@ -440,7 +440,7 @@ async function pasteImage() {
     notes = await addClipboardNote(quick.value.trim());
     quick.value = "";
     render();
-    toast("Imagen pegada");
+    toast("Image pasted");
   } catch (e) {
     toast(String(e));
   }
@@ -462,7 +462,7 @@ btnArchive.addEventListener("click", async () => {
     const path = await archiveNotes();
     notes = await listNotes();
     render();
-    toast(`Guardado en ${path.replace(/^.*[\\/]guardadas[\\/]/, "guardadas\\")}`);
+    toast(`Saved to ${path.replace(/^.*[\\/]saved[\\/]/, "saved\\")}`);
   } catch (e) {
     toast(String(e));
   }
@@ -471,11 +471,11 @@ btnArchive.addEventListener("click", async () => {
 el("btn-clear").addEventListener("click", async () => {
   if (!notes.length) return;
   const withShots = notes.filter((n) => n.image).length;
-  const detail = withShots ? ` y sus ${withShots} capturas` : "";
+  const detail = withShots ? ` and their ${withShots} screenshots` : "";
   const ok = await ask({
-    title: "Vaciar las notas",
-    body: `Se borrarán ${notes.length} anotaciones${detail}. Esto no se puede deshacer: usa «Guardar notas» si quieres conservarlas.`,
-    confirm: "Borrar",
+    title: "Clear the notes",
+    body: `${notes.length} notes${detail} will be deleted. This cannot be undone — use “Save notes” if you want to keep them.`,
+    confirm: "Delete",
     danger: true,
   });
   if (!ok) return;
@@ -509,8 +509,8 @@ excludeCapture.addEventListener("change", async () => {
   await putSettings(settings);
   toast(
     excludeCapture.checked
-      ? "El panel queda fuera de las capturas"
-      : "El panel se ocultará durante cada captura",
+      ? "The panel stays out of screen captures"
+      : "The panel will hide during each capture",
   );
 });
 
@@ -533,7 +533,7 @@ win.onResized(rememberSize);
 listen<Note[]>("notes-changed", (e) => {
   notes = e.payload;
   render();
-  if (collapsed) toast(`${notes.length} anotaciones`);
+  if (collapsed) toast(`${notes.length} notes`);
 });
 
 settings = await getSettings();

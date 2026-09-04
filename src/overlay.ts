@@ -22,10 +22,10 @@ type Tool = "pen" | "arrow" | "rect" | "blur";
 type Stroke = { tool: Tool; color: string; width: number; points: Point[] };
 
 const TOOLS: { key: Tool; glyph: string; title: string }[] = [
-  { key: "pen", glyph: "✎", title: "Rotulador" },
-  { key: "arrow", glyph: "↗", title: "Flecha" },
-  { key: "rect", glyph: "▭", title: "Recuadro" },
-  { key: "blur", glyph: "▒", title: "Difuminar (tapar datos sensibles)" },
+  { key: "pen", glyph: "✎", title: "Marker" },
+  { key: "arrow", glyph: "↗", title: "Arrow" },
+  { key: "rect", glyph: "▭", title: "Box" },
+  { key: "blur", glyph: "▒", title: "Blur (cover sensitive data)" },
 ];
 
 let shot: CaptureReady = { version: 0, width: 0, height: 0 };

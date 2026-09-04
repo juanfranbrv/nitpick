@@ -15,8 +15,8 @@ export interface Note {
 /** Cycled in this order by the chip on each note. */
 export const PRIORITIES = [
   { key: "normal", label: "normal" },
-  { key: "blocker", label: "bloqueante" },
-  { key: "minor", label: "menor" },
+  { key: "blocker", label: "blocking" },
+  { key: "minor", label: "minor" },
 ];
 
 export interface Archive {
@@ -39,7 +39,7 @@ export interface Settings {
   exclude_from_capture: boolean;
   pen_color: string;
   pen_width: number;
-  /** Wrapper for the copied text. `{{notas}}`, `{{total}}`, `{{fecha}}`. */
+  /** Wrapper for the copied text. `{{notes}}`, `{{total}}`, `{{date}}`. */
   template: string;
 }
 

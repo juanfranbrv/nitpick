@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <title>Nitpick</title>
@@ -9,8 +9,8 @@
     <div id="pill" class="pill" data-tauri-drag-region hidden>
       <span class="pill-dot"></span>
       <span class="pill-count" id="pill-count">0</span>
-      <span class="pill-label">anotaciones</span>
-      <button class="pill-expand" id="btn-expand" title="Abrir panel"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 9.7 8 6.1l3.6 3.6"/></svg></button>
+      <span class="pill-label">notes</span>
+      <button class="pill-expand" id="btn-expand" title="Open the panel"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 9.7 8 6.1l3.6 3.6"/></svg></button>
     </div>
 
     <div id="panel" class="card">
@@ -18,87 +18,87 @@
         <span class="grip" data-tauri-drag-region></span>
         <h1 data-tauri-drag-region>Nitpick</h1>
         <span class="count" id="count">0</span>
-        <button id="btn-shot" title="Capturar región (Ctrl+Alt+A)"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4.3" cy="12" r="1.9"/><circle cx="11.7" cy="12" r="1.9"/><path d="M11.1 2.6 5.5 10.6M4.9 2.6l5.6 8"/></svg></button>
-        <button id="btn-paste" title="Pegar imagen del portapapeles (Ctrl+V)"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H4.9A.9.9 0 0 0 4 3.9v9.2a.9.9 0 0 0 .9.9h6.2a.9.9 0 0 0 .9-.9V3.9A.9.9 0 0 0 11.1 3H10"/><rect x="6" y="1.8" width="4" height="2.4" rx=".7"/></svg></button>
-        <button id="btn-archives" title="Notas guardadas"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.2" y="2.8" width="11.6" height="3" rx=".8"/><path d="M3.2 5.8v6.5a.9.9 0 0 0 .9.9h7.8a.9.9 0 0 0 .9-.9V5.8"/><path d="M6.6 8.6h2.8"/></svg></button>
-        <button id="btn-folder" title="Abrir carpeta de capturas"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 12.4V4.3a.9.9 0 0 1 .9-.9h2.7l1.3 1.7h5.8a.9.9 0 0 1 .9.9v6.4a.9.9 0 0 1-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></svg></button>
-        <button id="btn-settings" title="Ajustes"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 5.2h10.8M2.6 10.8h10.8"/><circle cx="6" cy="5.2" r="1.7"/><circle cx="10.4" cy="10.8" r="1.7"/></svg></button>
-        <button id="btn-collapse" title="Colapsar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 6.3 8 9.9l3.6-3.6"/></svg></button>
-        <button id="btn-quit" class="quit" title="Cerrar Nitpick"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8"/></svg></button>
+        <button id="btn-shot" title="Capture a region (Ctrl+Alt+A)"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="4.3" cy="12" r="1.9"/><circle cx="11.7" cy="12" r="1.9"/><path d="M11.1 2.6 5.5 10.6M4.9 2.6l5.6 8"/></svg></button>
+        <button id="btn-paste" title="Paste an image from the clipboard (Ctrl+V)"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3H4.9A.9.9 0 0 0 4 3.9v9.2a.9.9 0 0 0 .9.9h6.2a.9.9 0 0 0 .9-.9V3.9A.9.9 0 0 0 11.1 3H10"/><rect x="6" y="1.8" width="4" height="2.4" rx=".7"/></svg></button>
+        <button id="btn-archives" title="Saved notes"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.2" y="2.8" width="11.6" height="3" rx=".8"/><path d="M3.2 5.8v6.5a.9.9 0 0 0 .9.9h7.8a.9.9 0 0 0 .9-.9V5.8"/><path d="M6.6 8.6h2.8"/></svg></button>
+        <button id="btn-folder" title="Open the screenshots folder"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 12.4V4.3a.9.9 0 0 1 .9-.9h2.7l1.3 1.7h5.8a.9.9 0 0 1 .9.9v6.4a.9.9 0 0 1-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></svg></button>
+        <button id="btn-settings" title="Settings"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 5.2h10.8M2.6 10.8h10.8"/><circle cx="6" cy="5.2" r="1.7"/><circle cx="10.4" cy="10.8" r="1.7"/></svg></button>
+        <button id="btn-collapse" title="Collapse"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.4 6.3 8 9.9l3.6-3.6"/></svg></button>
+        <button id="btn-quit" class="quit" title="Quit Nitpick"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.2 4.2 11.8 11.8M11.8 4.2 4.2 11.8"/></svg></button>
       </header>
 
       <ul class="notes" id="notes"></ul>
 
       <div class="empty" id="empty">
-        <p>Sin anotaciones todavía.</p>
-        <p class="hint"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> captura una región y abre el campo de texto.</p>
-        <p class="hint"><kbd>Ctrl</kbd>+<kbd>V</kbd> pega una imagen del portapapeles.</p>
+        <p>No notes yet.</p>
+        <p class="hint"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd> captures a region and opens the note field.</p>
+        <p class="hint"><kbd>Ctrl</kbd>+<kbd>V</kbd> pastes an image from the clipboard.</p>
       </div>
 
       <footer class="card-foot">
         <div class="quick">
-          <textarea id="quick" rows="3" placeholder="Nota rápida sin captura…"></textarea>
-          <button id="btn-quick" class="send" title="Añadir la nota (Ctrl+Enter)">⏎</button>
+          <textarea id="quick" rows="3" placeholder="Quick note, no screenshot…"></textarea>
+          <button id="btn-quick" class="send" title="Add the note (Ctrl+Enter)">⏎</button>
         </div>
-        <button id="btn-copy" class="primary">Copiar todo</button>
+        <button id="btn-copy" class="primary">Copy all</button>
         <div class="actions">
-          <button id="btn-archive" class="ghost" title="Guardar las notas en un .md y empezar una lista nueva">Guardar notas</button>
-          <button id="btn-clear" class="ghost danger" title="Borrar estas notas y sus capturas">Vaciar</button>
+          <button id="btn-archive" class="ghost" title="Write the notes to a .md and start a fresh list">Save notes</button>
+          <button id="btn-clear" class="ghost danger" title="Delete these notes and their screenshots">Clear</button>
         </div>
       </footer>
 
       <section class="sheet" id="archives" hidden>
         <header class="card-head">
-          <button id="btn-archives-back" title="Volver"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.9 3.8 5.9 8l4 4.2"/></svg></button>
-          <h1>Notas guardadas</h1>
-          <button id="btn-archives-folder" title="Abrir la carpeta"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 12.4V4.3a.9.9 0 0 1 .9-.9h2.7l1.3 1.7h5.8a.9.9 0 0 1 .9.9v6.4a.9.9 0 0 1-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></svg></button>
+          <button id="btn-archives-back" title="Back"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.9 3.8 5.9 8l4 4.2"/></svg></button>
+          <h1>Saved notes</h1>
+          <button id="btn-archives-folder" title="Open the folder"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.2 12.4V4.3a.9.9 0 0 1 .9-.9h2.7l1.3 1.7h5.8a.9.9 0 0 1 .9.9v6.4a.9.9 0 0 1-.9.9H3.1a.9.9 0 0 1-.9-.9Z"/></svg></button>
         </header>
         <ul class="archive-list" id="archive-list"></ul>
         <div class="empty" id="archives-empty" hidden>
-          <p>No has guardado ninguna nota todavía.</p>
-          <p class="hint">«Guardar notas» archiva la lista actual y abre una nueva.</p>
+          <p>You have not saved any notes yet.</p>
+          <p class="hint">“Save notes” files the current list away and starts a fresh one.</p>
         </div>
       </section>
 
       <section class="sheet settings" id="settings" hidden>
         <header class="card-head">
-          <button id="btn-settings-back" title="Volver"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.9 3.8 5.9 8l4 4.2"/></svg></button>
-          <h1>Ajustes</h1>
+          <button id="btn-settings-back" title="Back"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.9 3.8 5.9 8l4 4.2"/></svg></button>
+          <h1>Settings</h1>
         </header>
         <div class="settings-body">
           <fieldset>
-            <legend>Apariencia</legend>
-            <label><input type="radio" name="theme" value="dark" /><span>Oscuro</span></label>
-            <label><input type="radio" name="theme" value="light" /><span>Claro</span></label>
-            <label><input type="radio" name="theme" value="system" /><span>Según Windows</span></label>
+            <legend>Appearance</legend>
+            <label><input type="radio" name="theme" value="dark" /><span>Dark</span></label>
+            <label><input type="radio" name="theme" value="light" /><span>Light</span></label>
+            <label><input type="radio" name="theme" value="system" /><span>Follow Windows</span></label>
           </fieldset>
           <fieldset>
-            <legend>Opacidad de la ventana</legend>
+            <legend>Window opacity</legend>
             <div class="slider">
               <input type="range" id="opacity" min="20" max="100" step="5" />
               <output id="opacity-out">100%</output>
             </div>
           </fieldset>
           <fieldset>
-            <legend>Capturas</legend>
+            <legend>Screen captures</legend>
             <label>
-              <input type="checkbox" id="exclude-capture" /><span>Ocultar el panel de las capturas</span>
+              <input type="checkbox" id="exclude-capture" /><span>Keep the panel out of screen captures</span>
             </label>
             <p class="fieldset-hint">
-              Windows deja el panel fuera de toda captura de pantalla, también de las
-              de otros programas y de las grabaciones. Al desactivarlo el panel vuelve
-              a ser visible para ellos, pero tendrá que ocultarse y reaparecer en cada
-              captura propia, unos 70 ms más lenta.
+              Windows keeps the panel out of every screen capture, other programs'
+              and screen recordings included. Turn it off and the panel becomes
+              visible to them again, but it has to hide and reappear on each of
+              Nitpick's own captures, making them ~250&nbsp;ms slower.
             </p>
           </fieldset>
           <fieldset>
-            <legend>Plantilla de salida</legend>
+            <legend>Output template</legend>
             <p class="fieldset-hint">
-              Envoltorio del texto copiado. <code>{{notas}}</code> es el listado;
-              <code>{{total}}</code> y <code>{{fecha}}</code> son opcionales.
+              Wrapper for the copied text. <code>{{notes}}</code> is the list;
+              <code>{{total}}</code> and <code>{{date}}</code> are optional.
             </p>
             <textarea id="template" rows="4" spellcheck="false"></textarea>
-            <button type="button" id="btn-template-reset" class="ghost">Restaurar la de serie</button>
+            <button type="button" id="btn-template-reset" class="ghost">Restore the default</button>
           </fieldset>
         </div>
       </section>
@@ -110,8 +110,8 @@
           <h2 id="modal-title"></h2>
           <p id="modal-body"></p>
           <div class="modal-actions">
-            <button type="button" id="modal-cancel" class="ghost">Cancelar</button>
-            <button type="button" id="modal-ok" class="primary">Aceptar</button>
+            <button type="button" id="modal-cancel" class="ghost">Cancel</button>
+            <button type="button" id="modal-ok" class="primary">OK</button>
           </div>
         </div>
       </div>

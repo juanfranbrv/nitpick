@@ -24,7 +24,7 @@ const MAIN: &str = "main";
 /// Stored as stable keys; `PRIORITY_LABELS` is what reaches the Markdown.
 const PRIORITIES: [&str; 3] = ["normal", "blocker", "minor"];
 const PRIORITY_LABELS: [(&str, &str); 3] =
-    [("normal", ""), ("blocker", "bloqueante"), ("minor", "menor")];
+    [("normal", ""), ("blocker", "blocking"), ("minor", "minor")];
 
 fn priority_label(key: &str) -> &'static str {
     PRIORITY_LABELS.iter().find(|(k, _)| *k == key).map(|(_, l)| *l).unwrap_or("")
@@ -109,13 +109,13 @@ struct Settings {
     exclude_from_capture: bool,
     pen_color: String,
     pen_width: f64,
-    /// Wrapper for the copied text. `{{notas}}` is required; `{{total}}` and
-    /// `{{fecha}}` are optional. Different agents respond to different
+    /// Wrapper for the copied text. `{{notes}}` is required; `{{total}}` and
+    /// `{{date}}` are optional. Different agents respond to different
     /// preambles, so the whole envelope is yours to change.
     template: String,
 }
 
-pub const DEFAULT_TEMPLATE: &str = "# Anotaciones ({{total}}) - {{fecha}}\n{{notas}}";
+pub const DEFAULT_TEMPLATE: &str = "# Notes ({{total}}) - {{date}}\n{{notes}}";
 
 impl Default for Settings {
     fn default() -> Self {
@@ -232,25 +232,25 @@ fn render_notes(notes: &[Note]) -> String {
             out.push('\n');
         }
         if let Some(ctx) = &note.context {
-            out.push_str(&format!("Contexto: {ctx}\n"));
+            out.push_str(&format!("Context: {ctx}\n"));
         }
         if let Some(path) = &note.image {
-            out.push_str(&format!("Captura: {path}\n"));
+            out.push_str(&format!("Screenshot: {path}\n"));
         }
     }
     out
 }
 
 /// A malformed template still has to produce usable output, so a missing
-/// `{{notas}}` gets the notes appended rather than silently dropped.
+/// `{{notes}}` gets the notes appended rather than silently dropped.
 fn apply_template(template: &str, notes: &[Note]) -> String {
     let body = render_notes(notes);
     let filled = template
         .replace("{{total}}", &notes.len().to_string())
-        .replace("{{fecha}}", &Local::now().format("%Y-%m-%d %H:%M").to_string());
+        .replace("{{date}}", &Local::now().format("%Y-%m-%d %H:%M").to_string());
 
-    if filled.contains("{{notas}}") {
-        filled.replace("{{notas}}", &body)
+    if filled.contains("{{notes}}") {
+        filled.replace("{{notes}}", &body)
     } else {
         format!("{filled}\n{body}")
     }
@@ -335,7 +335,7 @@ fn start_capture(app: AppHandle) {
             ready
         }
         Err(e) => {
-            eprintln!("captura fallida: {e}");
+            eprintln!("capture failed: {e}");
             store.capturing.store(false, Ordering::SeqCst);
             if let Some(w) = &main {
                 let _ = w.show();
@@ -359,10 +359,10 @@ fn start_capture(app: AppHandle) {
             let _ = win.emit_to(OVERLAY, "capture-ready", ready);
             let _ = win.show();
             let _ = win.set_focus();
-            eprintln!("captura lista en {} ms", started.elapsed().as_millis());
+            eprintln!("capture ready in {} ms", started.elapsed().as_millis());
         }
         None => {
-            eprintln!("la ventana de selección no existe");
+            eprintln!("the selector window does not exist");
             store.capturing.store(false, Ordering::SeqCst);
             if let Some(w) = &main {
                 let _ = w.show();
@@ -430,14 +430,14 @@ fn commit_capture(
     let strokes = match strokes {
         Some(b64) => Some(
             base64::Engine::decode(&base64::engine::general_purpose::STANDARD, b64)
-                .map_err(|e| format!("trazos ilegibles: {e}"))?,
+                .map_err(|e| format!("unreadable strokes: {e}"))?,
         ),
         None => None,
     };
     {
         let store = app.state::<Store>();
         let guard = store.frozen.lock().unwrap();
-        let frozen = guard.as_ref().ok_or("no hay captura activa")?;
+        let frozen = guard.as_ref().ok_or("no capture in progress")?;
         let (fw, fh) = (frozen.width(), frozen.height());
 
         // The selector sends fractions of the image, so display scaling never
@@ -454,7 +454,7 @@ fn commit_capture(
         };
         let dest = store
             .base
-            .join("capturas")
+            .join("captures")
             .join(&session_id)
             .join(format!("{seq:02}.png"));
         capture::crop_to_png(&frozen.image, &dest, x, y, w, h, strokes.as_deref())?;
@@ -512,10 +512,10 @@ fn add_clipboard_note(
     let image = app
         .clipboard()
         .read_image()
-        .map_err(|_| "no hay ninguna imagen en el portapapeles".to_string())?;
+        .map_err(|_| "there is no image on the clipboard".to_string())?;
 
     let rgba = xcap::image::RgbaImage::from_raw(image.width(), image.height(), image.rgba().to_vec())
-        .ok_or("la imagen del portapapeles no se pudo leer")?;
+        .ok_or("could not read the clipboard image")?;
 
     let (seq, session_id) = {
         let mut session = store.session.lock().unwrap();
@@ -524,13 +524,13 @@ fn add_clipboard_note(
     };
     let dest = store
         .base
-        .join("capturas")
+        .join("captures")
         .join(&session_id)
         .join(format!("{seq:02}.png"));
     if let Some(parent) = dest.parent() {
         std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
     }
-    rgba.save(&dest).map_err(|e| format!("no se pudo guardar la imagen: {e}"))?;
+    rgba.save(&dest).map_err(|e| format!("could not save the image: {e}"))?;
 
     store.session.lock().unwrap().notes.push(Note {
         id: format!("n{seq:03}"),
@@ -614,7 +614,7 @@ struct Archive {
 }
 
 fn archive_dir(base: &PathBuf) -> PathBuf {
-    base.join("guardadas")
+    base.join("saved")
 }
 
 /// Session ids are timestamps, so they double as the display label.
@@ -642,17 +642,17 @@ fn parse_archive(text: &str, id: &str) -> Session {
     let mut blocks: Vec<Block> = Vec::new();
     for line in text.lines() {
         if let Some(heading) = line.strip_prefix("## ") {
-            // "3 · bloqueante" — the label is only there when it is not normal.
+            // "3 · blocking" — the label is only there when it is not normal.
             let priority = heading
                 .split_once(" · ")
                 .map(|(_, label)| priority_from_label(label.trim()))
                 .unwrap_or_else(default_priority);
             blocks.push(Block { lines: Vec::new(), image: None, context: None, priority });
-        } else if let Some(path) = line.strip_prefix("Captura: ") {
+        } else if let Some(path) = line.strip_prefix("Screenshot: ") {
             if let Some(block) = blocks.last_mut() {
                 block.image = Some(path.trim());
             }
-        } else if let Some(ctx) = line.strip_prefix("Contexto: ") {
+        } else if let Some(ctx) = line.strip_prefix("Context: ") {
             if let Some(block) = blocks.last_mut() {
                 block.context = Some(ctx.trim());
             }
@@ -707,7 +707,7 @@ fn list_archives(store: State<Store>) -> Vec<Archive> {
                 .iter()
                 .map(|n| n.text.as_str())
                 .find(|t| !t.is_empty())
-                .unwrap_or("(solo capturas)")
+                .unwrap_or("(screenshots only)")
                 .lines()
                 .next()
                 .unwrap_or("")
@@ -731,15 +731,15 @@ fn list_archives(store: State<Store>) -> Vec<Archive> {
 fn open_archive(app: AppHandle, id: String) -> Result<Vec<Note>, String> {
     let store = app.state::<Store>();
     if !store.session.lock().unwrap().notes.is_empty() {
-        return Err("guarda o vacía la tanda actual antes de abrir otra".into());
+        return Err("save or clear the current list before opening another".into());
     }
     let path = archive_dir(&store.base).join(format!("{id}.md"));
     let text = std::fs::read_to_string(&path)
-        .map_err(|e| format!("no se pudo leer {}: {e}", path.display()))?;
+        .map_err(|e| format!("could not read {}: {e}", path.display()))?;
 
     let session = parse_archive(&text, &id);
     if session.notes.is_empty() {
-        return Err("esa tanda no tiene anotaciones legibles".into());
+        return Err("that file has no readable notes".into());
     }
     let notes = session.notes.clone();
     *store.session.lock().unwrap() = session;
@@ -752,7 +752,7 @@ fn open_archive(app: AppHandle, id: String) -> Result<Vec<Note>, String> {
 #[tauri::command]
 fn archive_notes(store: State<Store>) -> Result<String, String> {
     if store.session.lock().unwrap().notes.is_empty() {
-        return Err("no hay nada que guardar".into());
+        return Err("nothing to save".into());
     }
     // Always the canonical format, never the user's template: the archive is
     // what `parse_archive` reads back, so a customised preamble must not be
@@ -763,10 +763,10 @@ fn archive_notes(store: State<Store>) -> Result<String, String> {
     };
     let dest = {
         let session = store.session.lock().unwrap();
-        store.base.join("guardadas").join(format!("{}.md", session.id))
+        store.base.join("saved").join(format!("{}.md", session.id))
     };
     std::fs::create_dir_all(dest.parent().unwrap()).map_err(|e| e.to_string())?;
-    std::fs::write(&dest, markdown).map_err(|e| format!("no se pudo guardar: {e}"))?;
+    std::fs::write(&dest, markdown).map_err(|e| format!("could not save: {e}"))?;
 
     *store.session.lock().unwrap() = Session::default();
     store.save_session();
@@ -882,7 +882,7 @@ fn main() {
             // Built once, up front: showing an existing hidden window is
             // near-instant, building a webview is not.
             WebviewWindowBuilder::new(app, OVERLAY, WebviewUrl::App("overlay.html".into()))
-                .title("Seleccionar region")
+                .title("Select a region")
                 .decorations(false)
                 .always_on_top(true)
                 .skip_taskbar(true)
@@ -892,19 +892,19 @@ fn main() {
                 .build()?;
 
             if !apply_capture_exclusion(app.handle()) {
-                eprintln!("el panel se ocultará durante cada captura");
+                eprintln!("the panel will hide during every capture");
             }
 
             // Another app may already own one of these. That costs a shortcut,
             // not the whole program, so never let it abort startup.
             for (key, label) in [(capture_key, "Ctrl+Alt+A"), (copy_key, "Ctrl+Alt+C")] {
                 if let Err(e) = app.global_shortcut().register(key) {
-                    eprintln!("atajo {label} no registrado: {e}");
+                    eprintln!("shortcut {label} not registered: {e}");
                     app.state::<Store>()
                         .warnings
                         .lock()
                         .unwrap()
-                        .push(format!("{label} ya lo usa otro programa"));
+                        .push(format!("{label} is already taken by another program"));
                 }
             }
             Ok(())
@@ -933,7 +933,7 @@ fn main() {
             quit,
         ])
         .run(tauri::generate_context!())
-        .expect("error al arrancar Nitpick");
+        .expect("failed to start Nitpick");
 }
 
 #[cfg(test)]
@@ -954,8 +954,8 @@ mod tests {
     fn markdown_round_trips() {
         let notes = vec![
             note("El sidebar se solapa con el header.", Some(r"C:\shots\01.png")),
-            note("Dos líneas\nde texto", Some(r"C:\shots\02.png")),
-            note("Sin captura", None),
+            note("Two lines\nof text", Some(r"C:\shots\02.png")),
+            note("No screenshot", None),
             note("", Some(r"C:\shots\04.png")),
         ];
         let parsed = parse_archive(&canonical(&notes), "20260903-155711");
@@ -972,8 +972,8 @@ mod tests {
     #[test]
     fn seq_resumes_past_the_highest_screenshot() {
         let notes = vec![
-            note("primera", Some(r"C:\shots\01.png")),
-            note("quinta", Some(r"C:\shots\05.png")),
+            note("first", Some(r"C:\shots\01.png")),
+            note("fifth", Some(r"C:\shots\05.png")),
         ];
         let parsed = parse_archive(&canonical(&notes), "20260903-155711");
         assert_eq!(parsed.seq, 5);
@@ -983,7 +983,7 @@ mod tests {
     /// must not quietly downgrade every note to normal.
     #[test]
     fn priority_and_context_round_trip() {
-        let mut notes = vec![note("bloquea el login", Some(r"C:\shots.png")), note("detalle", None)];
+        let mut notes = vec![note("blocks the login", Some(r"C:\shots.png")), note("a detail", None)];
         notes[0].priority = "blocker".into();
         notes[0].context = Some("Dashboard - Chrome · 1280×900".into());
         notes[1].priority = "minor".into();
@@ -992,7 +992,7 @@ mod tests {
 
         assert_eq!(parsed.notes[0].priority, "blocker");
         assert_eq!(parsed.notes[0].context.as_deref(), Some("Dashboard - Chrome · 1280×900"));
-        assert_eq!(parsed.notes[0].text, "bloquea el login");
+        assert_eq!(parsed.notes[0].text, "blocks the login");
         assert_eq!(parsed.notes[1].priority, "minor");
         assert_eq!(parsed.notes[1].context, None);
     }
@@ -1000,25 +1000,25 @@ mod tests {
     /// A template without the placeholder must still carry the notes.
     #[test]
     fn template_without_placeholder_keeps_the_notes() {
-        let notes = vec![note("algo va mal", None)];
-        let out = apply_template("Solo un preambulo", &notes);
-        assert!(out.starts_with("Solo un preambulo"));
-        assert!(out.contains("algo va mal"));
+        let notes = vec![note("something is wrong", None)];
+        let out = apply_template("Just a preamble", &notes);
+        assert!(out.starts_with("Just a preamble"));
+        assert!(out.contains("something is wrong"));
     }
 
     #[test]
     fn template_fills_its_placeholders() {
-        let notes = vec![note("uno", None), note("dos", None)];
-        let out = apply_template("Total: {{total}}
-{{notas}}", &notes);
-        assert!(out.starts_with("Total: 2
-"));
-        assert!(out.contains("uno") && out.contains("dos"));
+        let notes = vec![note("one", None), note("two", None)];
+        let out = apply_template("Total: {{total}} on {{date}}\n{{notes}}", &notes);
+
+        assert!(out.starts_with("Total: 2 on 20"), "unexpected header in {out:?}");
+        assert!(!out.contains("{{"), "a placeholder was left unfilled in {out:?}");
+        assert!(out.contains("one") && out.contains("two"));
     }
 
     #[test]
     fn label_falls_back_to_the_raw_id() {
         assert_eq!(label_for("20260903-155711"), "03/09/2026 15:57");
-        assert_eq!(label_for("no-es-una-fecha"), "no-es-una-fecha");
+        assert_eq!(label_for("not-a-date"), "not-a-date");
     }
 }
